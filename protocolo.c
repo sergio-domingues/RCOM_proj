@@ -12,9 +12,6 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
-
-#define TRANSMITTER 0 //TODO: verificar esses estes defines devem ser feitos aqui
-#define RECEIVER 1
 #define DISPOSITIVO "/dev/ttySx"
 
 static struct termios oldtio; //boa prática limited scope

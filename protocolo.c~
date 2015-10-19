@@ -79,7 +79,7 @@ int llclose(int fd){
 }
 
 int emissor(int fd){
-	struct trama_SET set;
+	struct frame set;
 	set.flag=FLAG;
 	set.a=A_EMI_REC;
 	set.c=C_SET;
@@ -110,7 +110,7 @@ int emissor(int fd){
 }
 
 int receptor(int fd){
-	struct trama_SET ua;
+	struct frame ua;
 	ua.flag=FLAG;
 	ua.a=A_REC_EMI;
 	ua.c=C_UA;

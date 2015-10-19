@@ -13,5 +13,14 @@
 #define C_RR		0x21
 #define C_REJ		0x23
 
+#define TRANSMITTER 0
+#define RECEIVER 1
+
+#define BAUDRATE B9600
+#define MODEMDEVICE "/dev/ttyS1"
+#define _POSIX_SOURCE 1 /* POSIX compliant source */
+#define FALSE 0
+#define TRUE 1
+
 
 #endif
