@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-volatile int STOP=FALSE;
+/*volatile int STOP=FALSE;
 int conta=1,flag = 1;
 int pos_ack = 0;
 
@@ -20,7 +20,7 @@ void atende()                   // atende alarme
 	flag=1;
 	conta++;
 }
-
+*/
 //================================
 
 int main(int argc, char** argv)
