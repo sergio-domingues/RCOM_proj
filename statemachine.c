@@ -1,37 +1,30 @@
-#include <
-void start(char c,typeFrame frame);
-void flag_RCV(char c,typeFrame frame);
-void A_RCV(char c,typeFrame frame);
-void C_RCV(char c,typeFrame frame);
-void BCC(char c,typeFrame frame);
-void stop(char c,typeFrame frame);
+#include "macros.h"
+#include <stdio.h>
 
 
-typedef enum {SET,DISC,UA,RR,REJ,I} typeFrame;
-
-struct frame {
-	 char flag;
-	 char a;
-	 char c;
-	 char bcc;
-	 char flag2;
-};
+int start(char c,typeFrame f);
+int flag_RCV(char c,typeFrame f);
+int A_RCV(char c,typeFrame f);
+int C_RCV(char c,typeFrame f);
+int BCC(char c,typeFrame f);
+int stop(char c,typeFrame f);
 
 static frame receiveFrame;
 
 //TODO improve global
-void (*stateFunc)(char c,typeFrame frame) = start;
+int (*stateFunc)(char c,typeFrame f) = start;
 
-void start(char c,typeFrame frame){
+int start(char c,typeFrame f){
 	printf("start\n");   		
 	
 	if(c == FLAG){
 		stateFunc = flag_RCV;
 		receiveFrame.flag = c;
 	}
+	return 0;
 }
 
-void flag_RCV(char c,typeFrame frame){
+int flag_RCV(char c,typeFrame f){
 	printf("flag_RCV\n");	
 
      if(c == A_EMI_REC || c== A_REC_EMI){
@@ -42,12 +35,15 @@ void flag_RCV(char c,typeFrame frame){
 	stateFunc = flag_RCV;
      else 
 	stateFunc = start;
+	
+	return 0;
+
 }
 
-void A_RCV(char c,typeFrame frame){
+int A_RCV(char c,typeFrame f){
 	printf("A_RCV\n");
 
-	switch(frame){
+	switch(f){
 
 	case SET:
 		if(c == C_SET){
@@ -93,30 +89,39 @@ void A_RCV(char c,typeFrame frame){
 		stateFunc = flag_RCV;
     else 
 		stateFunc = start;
+
+	return 0;
+
 }
 
-void C_RCV(char c,typeFrame frame){
+int C_RCV(char c,typeFrame f){
 	printf("C_RCV\n");	
-    if( c == (receivedFrame.a^receivedFrame.c)){
+    if( c == (receiveFrame.a^receiveFrame.c)){
 		stateFunc = BCC;
-		trama.bcc = c;
+		receiveFrame.bcc = c;
 	}
     else if ( c == FLAG)
 		stateFunc = flag_RCV;
     else 
 		stateFunc = start;
+
+	return 0;
 }
 
-void BCC(char c,typeFrame frame){
+int BCC(char c,typeFrame f){
 printf("BCC\n");	 
    	if (c == FLAG){
-		receivedFrame.flag2 = FLAG;
+		receiveFrame.flag2 = FLAG;
 		stateFunc = stop;
 	}
     else 
 		stateFunc = start;
+	
+	return 0;
+	
 }
 
-void stop(char c,typeFrame frame){
-	printf("stop\n");		
+int stop(char c,typeFrame f){
+	printf("stop\n");
+	return 1;		
 }

@@ -17,10 +17,20 @@
 #define RECEIVER 1
 
 #define BAUDRATE B9600
-#define MODEMDEVICE "/dev/ttyS1"
+#define DISPOSITIVO "/dev/ttyS1"
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
+
+typedef enum {SET,DISC,UA,RR,REJ,I} typeFrame;
+
+typedef struct frame_struct {
+	 char flag;
+	 char a;
+	 char c;
+	 char bcc;
+	 char flag2;
+}frame;
 
 
 #endif

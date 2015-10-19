@@ -10,6 +10,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "macros.h"
+
 /*volatile int STOP=FALSE;
 int conta=1,flag = 1;
 int pos_ack = 0;
