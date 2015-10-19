@@ -1,0 +1,17 @@
+#ifndef _MACROS_H_
+#define _MACROS_H_
+
+#define FLAG 		0x7E
+#define FLAG_STUFFING	0x5E
+#define ESCAPE		0x7D
+#define ESCAPE_STUFFING 0x5D
+#define A_EMI_REC 0x03
+#define A_REC_EMI 0x01
+#define C_SET 0x07
+
+
+
+
+
+
+#endif
