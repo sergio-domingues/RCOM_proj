@@ -16,104 +16,11 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
-#define FLAG 0x7e
-#define A 0x03
-#define C_SET 0x07
+
 
 volatile int STOP=FALSE;
 int conta=1,flag = 1;
-
-
-void start(char c);
-void flag_RCV(char c);
-void A_RCV(char c);
-void C_RCV(char c);
-void BCC(char c);
-void stop(char c);
-void (*stateFunc)(char c) = start;
-
-struct trama_SET {
-	 char flag;
-	 char a;
-	 char c;
-	 char bcc;
-	 char flag2;
-};
-
-struct trama_SET trama;
 int pos_ack = 0;
-
-void clean_trama(){
-
-     trama.flag = 0;
-     trama.a = 0;
-     trama.c = 0;
-     trama.bcc =0;
-     trama.flag2 = 0;	
-}
-	
-void start(char c){
-	printf("start\n");   		
-	
-	if(c == FLAG){
-		stateFunc = flag_RCV;
-		trama.flag = c;
-	}
-}
-
-void flag_RCV(char c){
-printf("flag_RCV\n");	
-
-     if(c == A){
-	stateFunc = A_RCV;
-        trama.a = A;
-     }
-     else if ( c == FLAG)
-	stateFunc = flag_RCV;
-     else 
-	stateFunc = start;
-}
-
-void A_RCV(char c){
-printf("A_RCV\n");	
-	if(c == C_SET){
-	stateFunc = C_RCV;
-	trama.c = c;	
-	}
-     else if ( c == FLAG)
-	stateFunc = flag_RCV;
-     else 
-	stateFunc = start;
-}
-
-void C_RCV(char c){
-printf("C_RCV\n");	
-     if( c == (trama.a^trama.c)){
-	stateFunc = BCC;
-	trama.bcc = c;
-}
-     else if ( c == FLAG)
-	stateFunc = flag_RCV;
-     else 
-	stateFunc = start;
-}
-
-void BCC(char c){
-printf("BCC\n");	 
-   if (c == FLAG){
-	trama.flag2 = FLAG;
-	stateFunc = stop;
-}
-     else 
-	stateFunc = start;
-}
-
-void stop(char c){
-printf("stop\n");		
-pos_ack = 1;
-	printf("recebeu no emissor\n");
-}
-
 
 void atende()                   // atende alarme
 {
