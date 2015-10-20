@@ -17,7 +17,7 @@
 #define RECEIVER 1
 
 #define BAUDRATE B9600
-#define DISPOSITIVO "/dev/ttyS1"
+#define DISPOSITIVO "/dev/ttyS"
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
