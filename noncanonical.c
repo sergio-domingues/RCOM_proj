@@ -1,15 +1,7 @@
 /*Non-Canonical Input Processing*/
-
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <termios.h>
-#include <stdio.h>
-#include <strings.h>
-#include <stdlib.h>
-
 #include "macros.h"
+
+
 
 int main(int argc, char** argv)
 { 
@@ -24,8 +16,10 @@ int main(int argc, char** argv)
 	sscanf(argv[1],"/dev/ttyS%d",&port);
 
 	int fd= llopen(port,RECEIVER);
+	
+	//llread(fd,buffer);
 
-	llclose(fd);
+	//llclose(fd,...);
 
 	return 0;
 }

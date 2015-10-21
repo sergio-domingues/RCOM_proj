@@ -1,6 +1,4 @@
 #include "macros.h"
-#include <stdio.h>
-
 
 int start(char c,typeFrame f);
 int flag_RCV(char c,typeFrame f);
@@ -28,7 +26,7 @@ int flag_RCV(char c,typeFrame f){
 	printf("flag_RCV\n");	
 
      if(c == A_EMI_REC || c== A_REC_EMI){
-	stateFunc = A_RCV;
+		stateFunc = A_RCV;
         receiveFrame.a = c;
      }
      else if ( c == FLAG)

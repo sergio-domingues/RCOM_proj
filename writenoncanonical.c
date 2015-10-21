@@ -44,10 +44,11 @@ int main(int argc, char** argv)
 	int port;
 	sscanf(argv[1],"/dev/ttyS%d",&port);
 
-	int fd= llopen(port,TRANSMITTER);
+	int fd = llopen(port,TRANSMITTER);
+
+	//llwrite(fd,buffer,length);  
 
 	llclose(fd);
-
 
 	return 0;
 

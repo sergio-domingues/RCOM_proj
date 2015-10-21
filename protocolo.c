@@ -1,46 +1,44 @@
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <termios.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include "macros.h"
 
-static struct termios oldtio; //boa prática limited scope
 
+static struct termios oldtio; //boa pratica limited scope
+
+//colocar no ficheiro header (.h)
 int llclose(int fd);
 int llopen(int porta,int tipo);
-int emissor(int fd);
-int receptor(int fd);
+//===============================
 
+//nao colocar no ficheiro .h   (limited scope)
+static int connection_transmitter(int fd);
+static int connection_receiver(int fd);
+static int disconnection_transmitter(int fd);
+static int disconnection_receiver(int fd);
 
-int llopen(int porta,int tipo){
-	
+static int port_setting(int fd);
+
+//loop send/receive till correct answer
+static int transmission_frame_SU(int fd, frame send);
+static int send_frame(int fd, frame send);
+static int receive_frame(int fd);
+//================================
+
+static int alarm_flag = 1, counter = 0;
+
+int port_setting(int fd){	
 	struct termios newtio;
-	char device_path[strlen(DISPOSITIVO)+2]; // 2B : 1-portra 2-'\0'
-	
-	sprintf(device_path,"%s%d",DISPOSITIVO, porta);
-		
-	int fd = open(device_path, O_RDWR | O_NOCTTY ); //If set & path identifies a terminal device dn't cause terminal device to become the controlling terminal for the process.
-    if (fd <0) { perror(device_path); exit(-1); }
-	
-	printf("Inicia comunicao com dispostivo.\n");	
 	
     if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */
       perror("tcgetattr");
       exit(-1);
     }
+	
 	printf("Guarda configs porta.\n");
 	
     bzero(&newtio, sizeof(newtio));
     newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
     newtio.c_iflag = IGNPAR;
-    newtio.c_oflag = 0;
-
-    /* set input mode (non-canonical, no echo,...) */
-    newtio.c_lflag = 0;
+    newtio.c_oflag = 0;	
+    newtio.c_lflag = 0; 		/* set input mode (non-canonical, no echo,...) */
 
     newtio.c_cc[VTIME]    = 0;   /* inter-character timer 0 ms */
     newtio.c_cc[VMIN]     = 1;   /* blocking read till 5 chars read*/
@@ -53,89 +51,234 @@ int llopen(int porta,int tipo){
       perror("tcsetattr");
       exit(-1);
     }
-    printf("New termios structure set\n");
-
-	//>>> TODO
-	//COMPLETAR COM CHAMADAS ÀS FUNÇÕES QUE ENVIAM TRAMAS SET E UA CONFORME SEJA TRANSMITTER/RECEIVER
-	//IMPLEMENTAR ESSAS FUNÇÕES NO BOTTOM FILE
 	
-	if(tipo==TRANSMITTER){
-		return emissor(fd);
-	}else if(tipo==RECEIVER){
-		return receptor(fd);
+    printf("New termios structure set\n");	
+	return 0;	
+}
+
+int llopen(int porta,int tipo){	
+
+	char device_path[strlen(DISPOSITIVO)+2]; // 2B : 1-porta 2-'\0'
+	
+	sprintf(device_path,"%s%d",DISPOSITIVO, porta);
+		
+	int fd = open(device_path, O_RDWR | O_NOCTTY ); //If set & path identifies a terminal device dn't cause terminal device to become the controlling terminal for the process.
+    if (fd <0) { perror(device_path); exit(-1); }
+		
+	printf("Inicia comunicao com dispostivo.\n");	
+	
+	port_setting(fd); //configura port
+	
+	
+	//CONNECTION================
+	//ENVIO DE TRAMAS SET E UA
+	if(tipo == TRANSMITTER){
+		return connection_transmitter(fd);
+	}else if(tipo == RECEIVER){
+		return connection_receiver(fd);
 	}else
 		return -1;
 
-    return 0;	
+    return fd;	
 }
 
 
-int emissor(int fd){
+int connection_transmitter(int fd){	
+	
+	//envia trama SET
 	frame set;
+	
 	set.flag=FLAG;
 	set.a=A_EMI_REC;
 	set.c=C_SET;
 	set.bcc=A_EMI_REC^C_SET;
-	set.flag2=FLAG;
-
-	printf("Envio da trama");
-	write(fd,&set,sizeof(frame));
-
-	int pos_ack=0,res;
-	char ch;
+	set.flag2=FLAG;	
 	
+	//loop till send/receive succesfully
+	transmission_frame_SU(fd,send);
 
-	//recepção de UA
+	return fd;
+}
+
+// atende alarme
+void atende(){              
+	printf("alarme # %d\n", conta);
+	alarm_flag = 1;
+	counter++;
+}
+
+int transmission_frame_SU(int fd, frame send){
+			
+	(void) signal(SIGALRM, atende); //instala handler para alarme
+	
+	//loop enqt (emissor not connected receiver) atÃ© max_retries	
+	while(counter < MAX_RETRIES) {
+	
+		if(alarm_flag){ 
+		   alarm(ALARM_SPAN);  	//activa alarme de 3s                
+		   alarm_flag = 0;
+		}  			
+			
+		if( send_frame(fd,set) < 0 ){
+			printf("Error sending SET frame.\n");
+			exit(1);
+		}
+		
+		if ( receive_frame(fd) == 0 ) { //recebe UA frame com sucesso
+			printf("TRANSMITTER-RECEIVER connection established.\n");
+			break;
+		}	
+	}
+	
+	if(counter == MAX_RETRIES){ //nao conseguiu estabelecer conexao
+		printf("connection not established.\n")
+		return -1;
+	}
+			
+	counter = 0;
+	alarm_flag = 1;	
+	
+	return 0; //success	
+}
+
+
+int send_frame(int fd, frame send){
+	
+	printf("Envio da trama");	
+	return write(fd,&send,sizeof(send));	
+}
+
+
+int receive_frame(int fd){
+	
+	int pos_ack = 0, res;
+	char ch;	
 	
 	while(pos_ack == 0){
 	    res = read(fd,&ch,1);
 		printf("%d ",res);
 		printf("char recebido: %c \n",ch);
 	    pos_ack=stateFunc(ch);
+		
+		if(alarm_flag) //disparou alarme
+			return -1;		
 	}
+		
+	return 0; //sucesso
+}
+
+
+int connection_receiver(int fd){	
+	//espera por uma trama SET correcta
+	receive_frame(fd);	
+		
+	//envio de UA 
+	frame ua;
+	
+	ua.flag = FLAG;
+	ua.a = A_EMI_REC;
+	ua.c = C_UA;
+	ua.bcc = A_EMI_REC^C_UA;
+	ua.flag2 = FLAG;		
+	
+	if ( send_frame(fd,ua) < 0){
+		printf("Erro na escrita da trama UA");		
+		return -1;
+	}	
+	printf("UA frame sent.\n");
 	
 	return fd;
 }
 
-int receptor(int fd){
-	frame ua;
-	ua.flag=FLAG;
-	ua.a=A_REC_EMI;
-	ua.c=C_UA;
-	ua.bcc=A_REC_EMI^C_UA;
-	ua.flag2=FLAG;
 
-
-	//recepçao de SET
-	int pos_ack=0,res;
-	char ch;
+int llclose(int fd, int tipo){	 
 	
-	while(pos_ack == 0){
-	    res = read(fd,&ch,1);
-		printf("%d ",res);
-		printf("char recebido: %c \n",ch);
-	    pos_ack=stateFunc(ch);
-	}
-	
-	//validaçao da trama com uso da maq de estados definida previamente
-	write(fd,&ua,sizeof(frame));	
+	if(tipo == TRANSMITTER){
+		disconnection_transmitter(fd);
+	}else if(tipo == RECEIVER){
+		disconnection_receiver(fd);
+	}else
+		return -1;	
 
+	//=======================================
+	sleep(5);
 
-	//envio de UA 
-	
-	return 0;
-}
-int llclose(int fd){	 
-//enviar DIST receber DIST enviar UA  
     if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {  //repor configs
       perror("tcsetattr");
       exit(-1);
     }
 
-    if(close(fd) < 0)
+    if( close(fd) < 0 )
         return -1;
 		
 	printf("Termina ligacao com dispositivo.\n");	
 	return 0;
 }
 
+
+int disconnection_transmitter(int fd){
+	
+	frame disc;
+	
+	disc.flag = FLAG;
+	disc.a = A_REC_EMI;  //unica trama ao contrario
+	disc.c = C_DISC;
+	disc.bcc = A_REC_EMI^C_DISC;
+	disc.flag2 = FLAG;	
+	
+	//loop send/receive DISC
+	if ( transmission_frame_SU(fd,disc) != 0 ) {
+		printf("Error transmission/reception DISC's.\n");
+		return -1;	
+	}
+	printf("DISConnected.\n");
+		
+	frame ua;
+	
+	ua.flag = FLAG;
+	ua.a = A_EMI_REC;
+	ua.c = C_UA;
+	ua.bcc = A_EMI_REC^C_UA;
+	ua.flag2 = FLAG;		
+	
+	//chama send(ua)
+	if ( send_frame(fd,ua) < 0 ){
+		printf("Error sending UA");		
+		return -1;
+	}	
+	printf("UA frame sent.\n");
+	
+	return 0; 
+}
+
+int disconnection_receiver(int fd){
+	//receive DISC
+	receive_frame(fd);
+	
+	frame disc;
+	
+	disc.flag = FLAG;
+	disc.a = A_REC_EMI;  //unica trama em que [a = A_REC_EMI]
+	disc.c = C_DISC;
+	disc.bcc = A_REC_EMI^C_DISC;
+	disc.flag2 = FLAG;
+
+	(void) signal(SIGALRM, atende); //instala handler para alarme
+
+	alarme(3);
+	alarm_flag = 0;
+	
+	if( send_frame(fd,disc) < 0 ){	//send DISC
+		printf("Error sending DISC.\n");
+		return -1;		
+	}	
+	
+	if( receive_frame(fd) < 0 ) {
+		printf("Receiving UA timeout.\n");
+	}
+		
+	counter = 0;
+	alarm_flag = 1;	
+	
+	return 0;
+}
