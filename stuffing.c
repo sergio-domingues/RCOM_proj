@@ -21,17 +21,21 @@ int write_stuffing(int fd, const char * buffer){
 		}		
 	}
 	
-	
-	
-	
 	return 0;
 }
 
-int read_destuffing(int fd){
+int read_destuffing(int fd, const char * data_to_be_filled){
 	
+	char ch;
+	int i = 0, length = strlen(data_to_be_filled);
 	
-	
-	
+	while(i < length ){ //nao ultrapassar o tamanho esperado
+		
+		read(fd,&ch,1);
+		//....rever isto
+		
+	}
+
 	
 	return 0;
 }
