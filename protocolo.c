@@ -189,8 +189,38 @@ int connection_receiver(int fd){
 	
 	return fd;
 }
+//======================================
+//a ser chamada no emissor
+int llwrite(int fd, char * buffer, int length){
+	
+	//TODO verificacao disto
+	
+	//recebe buffer com fragmento do ficheiro
+	
+	//constroi pacote de controlo para sinalizar 
+	
+	//constroi pacote de dados
+	
+				
+	//envio de pacote de controlo
+	
+	//envio
+	//
+	
+	//realizar operacao de stuffing aqui ?
+	
+	
+	
+	return res; //num chars lidos
+}
 
+//a ser chamada no receptor
+int llread(int fd, char * buffer){	
+	
+	//return array_length; //num caracteres lidos
+}
 
+//======================================
 int llclose(int fd, int tipo){	 
 	
 	if(tipo == TRANSMITTER){
@@ -200,7 +230,7 @@ int llclose(int fd, int tipo){
 	}else
 		return -1;	
 
-	//=======================================
+
 	sleep(5);
 
     if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {  //repor configs

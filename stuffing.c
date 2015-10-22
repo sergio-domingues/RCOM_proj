@@ -32,7 +32,8 @@ int read_destuffing(int fd, const char * data_to_be_filled){
 	while(i < length ){ //nao ultrapassar o tamanho esperado
 		
 		read(fd,&ch,1);
-		//....rever isto
+		
+		if()
 		
 	}
 
