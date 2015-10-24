@@ -4,7 +4,7 @@
 #define FILENAME "pinguim.gif"
 /*TODO ALTERAR ISTO PARA VALOR CORRECTO*/
 #define FILE_LENGTH "11000" 
-#define PACKET_HEADER_LENGTH 	4 	/*BYTES*/
+#define P_HEADER_SIZE 	4 	/*BYTES*/
 
 typedef struct ctrl_packet {
  unsigned char control_field = 1;  //START POR DEFEITO
@@ -22,40 +22,58 @@ typedef struct ctrl_packet {
 
 //============================
 
+unsigned char calc_bcc(const char* buffer, int length){
+	
+	unsigned char bcc = 0;
+	
+	int i;
+	for(i=0; i < length; i++){		
+		bcc ^= buffer[1];
+	}
+	
+	return bcc;
+}
+
+
 int main(int argc, char** argv){
   
   //ARGC E ARGVS... VERIFICACOES
   
   //llopen(...)
 
-  //>>>> DATA TRANSMITTING SECTION <<<<
+  //>>>> DATA TRANSMISSION SECTION <<<<
   //TODO CALCULAR ISTO
-  int tam_max_fragmento = 1000; //BYTES
+  int tam_fragmento= 1000; //BYTES
   int num_fragmentos = 20;
   int seq_actual = 0;
+  int data_packet_length = tam_fragmento + P_HEADER_SIZE;
   
   
-  //START PACKET
+  //PACOTE DE CONTROLO (START)
   control_packet c_packet_start;  			 //c-control d-data
   write(fd, &c_packet_start, sizeof(c_packet_start));  //envio de packet start
+  printf("packet start\n");
   
   
-  unsigned char data_packet[tam_max_fragmento + PACKET_HEADER_LENGTH];
-  unsigned char data_header[PACKET_HEADER_LENGTH];
+  unsigned char data_packet[tam_fragmento + P_HEADER_SIZE];
   
-  data_header[0] = 0;
-  data_header[1] = seq_actual;
-  data_header[2] = (0xFF00 & tam_max_fragmento) >> 8; //L2
-  data_header[3] = 0x00FF & tam_max_fragmento;        //L1
+  //DATA PACKET HEADER
+  data_packet[0] = 0;
+  data_packet[1] = seq_actual;
+  data_packet[2] = (0xFF00 &  tam_max_fragmento) >> 8; //L2
+  data_packet[3] = 0x00FF & tam_max_fragmento;         //L1
   
-  while(1){
-    
+  while(1){ //HANDLER TRAMAS I 
+    printf("ciclo while\n");
      
-    //llwrite(fd,
+    llwrite(fd,data_packet,sizeof(data_packet));
+    break; 
+    //TODO testar a receber apenas 1 packet
+    
     //SE RECEBE POSITIVE ACK -> seq_actual++
   }
   
-  /*END PACKET*/
+  //PACOTE DE CONTROLO (END)
   c_packet_start.control_field = 2;  //2 - END
   write(fd,&c_packet_start,sizeof(c_packet_start));  //envio de packet END
   //=====================================

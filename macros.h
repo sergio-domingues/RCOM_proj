@@ -11,6 +11,9 @@
 #include <unistd.h>
 #include <signal.h>
 
+
+#define N(s) (0000000 | (s << 5))
+
 #define FLAG 			0x7E
 #define FLAG_STUFFING	0x5E
 #define ESCAPE			0x7D
@@ -34,6 +37,7 @@
 #define MAX_RETRIES 3
 #define ALARM_SPAN 3
 #define MAX_FRAME_I 256   /*TODO USER DEFINE ESTE TAMANHO*/
+
 
 typedef enum { SET, DISC, UA, RR, REJ, I } typeFrame;
 

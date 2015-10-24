@@ -1,5 +1,7 @@
 #include "macros.h"
 
+#define FRAME_HEADER_SIZE 4  //BYTES
+
 //nao colocar no ficheiro .h   (limited scope)
 static int connection_transmitter(int fd);
 static int connection_receiver(int fd);
@@ -11,6 +13,8 @@ static int port_setting(int fd);
 static int transmission_frame_SU(int fd, frame send);	//loop send/receive till correct answer
 static int send_frame(int fd, frame send);
 static int receive_frame(int fd, typeFrame f);
+
+static unsigned char calc_bcc(const char* buffer, int length)
 //================================
 //>>>>GLOBALS
 
@@ -19,7 +23,7 @@ static int alarm_flag = 1, counter = 0;
 static char[MAX_FRAME_I] I_frame;
 
 //TODO CRIAR struct link layer para encapsular informacao
-//no ficheiro .h declarar la a varaivel e aqui declarar a descriçao da struct
+//no ficheiro .h declarar la a variavel e aqui declarar a descriçao da struct
 
 //================================
 
@@ -193,20 +197,37 @@ int connection_receiver(int fd){
 	return fd;
 }
 //======================================
+
+unsigned char calc_bcc(const char* buffer, int length){	
+	unsigned char bcc = 0;	
+	int i;
+	for(i=0; i < length; i++){		
+		bcc ^= buffer[1];
+	}
+	
+	return bcc;
+}
+
 //a ser chamada no emissor
 int llwrite(int fd, const char * buffer, int length){
 	
-        //adiciona controlo 
+	unsigned char frame[FRAME_HEADER_SIZE + length + 2]; //2 = bcc2 + flag
 	
+	frame[0] = FLAG;
+	frame[1] = A_EMI_REC;
+	frame[2] = N(0);
+	frame[3] = A_EMI_REC^N(0));
 	
-	//constroi pacote de dados	
-				
-	//envio de pacote de controlo
+	memcpy(&frame[4],buffer,length); //incorpora dados na frame
 	
+	//calcula bcc2 da frame e guarda valor
+	frame[sizeof(frame)-2] = calc_bcc(frame, sizeof(frame)-2);
+	frame[sizeof(frame)-1] = FLAG;
 	
-	//realizar operacao de stuffing aqui ?
-	
-	
+	if (write_stuffing(fd,frame, sizeof(frame)) ){
+		printf("error writing stuffed frame\n");
+		//proceder de acordo
+	}
 	
 	return 0; //res; //num chars lidos
 }
