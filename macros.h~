@@ -33,6 +33,7 @@
 #define TRUE 1
 #define MAX_RETRIES 3
 #define ALARM_SPAN 3
+#define MAX_FRAME_I 256   /* tamanho da trama I */
 
 typedef enum { SET, DISC, UA, RR, REJ, I } typeFrame;
 
@@ -43,9 +44,6 @@ typedef struct frame_struct {
 	 char bcc;
 	 char flag2;
 } frame;
-
-
-int (*stateFunc)(char c,typeFrame f);
 
 
 #endif

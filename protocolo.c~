@@ -16,6 +16,7 @@ static int receive_frame(int fd, typeFrame f);
 
 static struct termios oldtio; //boa pratica limited scope
 static int alarm_flag = 1, counter = 0;
+static char[MAX_FRAME_I] I_frame;
 
 //TODO CRIAR struct link layer para encapsular informacao
 //no ficheiro .h declarar la a varaivel e aqui declarar a descriçao da struct
@@ -106,7 +107,7 @@ void atende(){
 }
 
 int transmission_frame_SU(int fd, frame send){
-		
+		  
 	(void) signal(SIGALRM, atende); //instala handler para alarme
 	
 	typeFrame frame_received = UA;
@@ -193,21 +194,24 @@ int connection_receiver(int fd){
 }
 //======================================
 //a ser chamada no emissor
-int llwrite(int fd, char * buffer, int length){
+int llwrite(int fd, const char * buffer, int length){
 	
-	//TODO verificacao disto
-	
-	//recebe buffer com fragmento do ficheiro
-	
+      I_frame ; //estrutura : [controlo flag = 1...| dados |controlo : flag =2...]
+  
+      I_frame[0] = 1; //start
+      I_frame[1] = 1;
+      I_frame[2] = 1;
+      I_frame[3] = 1;
+      I_frame[4] = 1;
+      
 	//constroi pacote de controlo para sinalizar 
 	
-	//constroi pacote de dados
 	
+	
+	//constroi pacote de dados	
 				
 	//envio de pacote de controlo
 	
-	//envio
-	//
 	
 	//realizar operacao de stuffing aqui ?
 	

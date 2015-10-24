@@ -16,6 +16,7 @@ static int receive_frame(int fd, typeFrame f);
 
 static struct termios oldtio; //boa pratica limited scope
 static int alarm_flag = 1, counter = 0;
+static char[MAX_FRAME_I] I_frame;
 
 //TODO CRIAR struct link layer para encapsular informacao
 //no ficheiro .h declarar la a varaivel e aqui declarar a descriçao da struct
@@ -193,21 +194,15 @@ int connection_receiver(int fd){
 }
 //======================================
 //a ser chamada no emissor
-int llwrite(int fd, char * buffer, int length){
+int llwrite(int fd, const char * buffer, int length){
 	
-	//TODO verificacao disto
+        //adiciona controlo 
 	
-	//recebe buffer com fragmento do ficheiro
 	
-	//constroi pacote de controlo para sinalizar 
-	
-	//constroi pacote de dados
-	
+	//constroi pacote de dados	
 				
 	//envio de pacote de controlo
 	
-	//envio
-	//
 	
 	//realizar operacao de stuffing aqui ?
 	

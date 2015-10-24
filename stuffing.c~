@@ -24,7 +24,7 @@ int write_stuffing(int fd, const char * buffer){
 	return 0;
 }
 
-int read_destuffing(int fd, const char * data_to_be_filled){
+int read_destuffing(int fd, char * data_to_be_filled){
 	
 	char ch;
 	int i = 0, length = strlen(data_to_be_filled);

@@ -3,6 +3,9 @@
 //recebe buffer CAMPO DE DADOS
 int write_stuffing(int fd, const char * buffer){
 	
+  
+	//TODO FAZER STUFFING A TUDO MENOS 1º E ULTIMO BYTE -> FLAG
+  
 	int length = strlen(buffer);
 	
 	int i;

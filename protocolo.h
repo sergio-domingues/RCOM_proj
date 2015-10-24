@@ -2,7 +2,7 @@
 #define _PROTOCOLO_H
 
 int llopen(int porta,int tipo);
-int llwrite(int fd, char * buffer, int length);
+int llwrite(int fd, const char * buffer, int length);
 int llread(int fd, char * buffer);
 int llclose(int fd, int tipo);
 
