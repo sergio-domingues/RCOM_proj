@@ -31,7 +31,7 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
-#define MAX_RETRYS 3
+#define MAX_RETRIES 3
 #define ALARM_SPAN 3
 
 typedef enum { SET, DISC, UA, RR, REJ, I } typeFrame;
@@ -45,6 +45,7 @@ typedef struct frame_struct {
 } frame;
 
 
+int (*stateFunc)(char c,typeFrame f);
 
 
 #endif

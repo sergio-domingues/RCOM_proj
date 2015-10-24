@@ -1,13 +1,5 @@
 #include "macros.h"
 
-
-static struct termios oldtio; //boa pratica limited scope
-
-//colocar no ficheiro header (.h)
-int llclose(int fd);
-int llopen(int porta,int tipo);
-//===============================
-
 //nao colocar no ficheiro .h   (limited scope)
 static int connection_transmitter(int fd);
 static int connection_receiver(int fd);
@@ -16,13 +8,19 @@ static int disconnection_receiver(int fd);
 
 static int port_setting(int fd);
 
-//loop send/receive till correct answer
-static int transmission_frame_SU(int fd, frame send);
+static int transmission_frame_SU(int fd, frame send);	//loop send/receive till correct answer
 static int send_frame(int fd, frame send);
-static int receive_frame(int fd);
+static int receive_frame(int fd, typeFrame f);
 //================================
+//>>>>GLOBALS
 
+static struct termios oldtio; //boa pratica limited scope
 static int alarm_flag = 1, counter = 0;
+
+//TODO CRIAR struct link layer para encapsular informacao
+//no ficheiro .h declarar la a varaivel e aqui declarar a descriçao da struct
+
+//================================
 
 int port_setting(int fd){	
 	struct termios newtio;
@@ -43,9 +41,9 @@ int port_setting(int fd){
     newtio.c_cc[VTIME]    = 0;   /* inter-character timer 0 ms */
     newtio.c_cc[VMIN]     = 1;   /* blocking read till 5 chars read*/
 	
-	printf("Reconfigura porta.\n");	
-	
-	tcflush(fd, TCIOFLUSH); //flushes both data received but not read, and data written but not transmitted.
+    printf("Reconfigura porta.\n");	
+    
+    tcflush(fd, TCIOFLUSH); //flushes both data received but not read, and data written but not transmitted.
 
     if ( tcsetattr(fd,TCSANOW,&newtio) == -1) {
       perror("tcsetattr");
@@ -63,7 +61,7 @@ int llopen(int porta,int tipo){
 	sprintf(device_path,"%s%d",DISPOSITIVO, porta);
 		
 	int fd = open(device_path, O_RDWR | O_NOCTTY ); //If set & path identifies a terminal device dn't cause terminal device to become the controlling terminal for the process.
-    if (fd <0) { perror(device_path); exit(-1); }
+	if (fd <0) { perror(device_path); exit(-1); }
 		
 	printf("Inicia comunicao com dispostivo.\n");	
 	
@@ -95,21 +93,23 @@ int connection_transmitter(int fd){
 	set.flag2=FLAG;	
 	
 	//loop till send/receive succesfully
-	transmission_frame_SU(fd,send);
+	transmission_frame_SU(fd,set);
 
 	return fd;
 }
 
 // atende alarme
 void atende(){              
-	printf("alarme # %d\n", conta);
+	printf("alarme # %d\n", counter);
 	alarm_flag = 1;
 	counter++;
 }
 
 int transmission_frame_SU(int fd, frame send){
-			
+		  
 	(void) signal(SIGALRM, atende); //instala handler para alarme
+	
+	typeFrame frame_received = UA;
 	
 	//loop enqt (emissor not connected receiver) até max_retries	
 	while(counter < MAX_RETRIES) {
@@ -119,19 +119,19 @@ int transmission_frame_SU(int fd, frame send){
 		   alarm_flag = 0;
 		}  			
 			
-		if( send_frame(fd,set) < 0 ){
+		if( send_frame(fd,send) < 0 ){
 			printf("Error sending SET frame.\n");
 			exit(1);
 		}
 		
-		if ( receive_frame(fd) == 0 ) { //recebe UA frame com sucesso
+		if ( receive_frame(fd, frame_received) == 0 ) { //recebe UA frame com sucesso
 			printf("TRANSMITTER-RECEIVER connection established.\n");
 			break;
 		}	
 	}
 	
 	if(counter == MAX_RETRIES){ //nao conseguiu estabelecer conexao
-		printf("connection not established.\n")
+		printf("connection not established.\n");
 		return -1;
 	}
 			
@@ -149,19 +149,19 @@ int send_frame(int fd, frame send){
 }
 
 
-int receive_frame(int fd){
+int receive_frame(int fd, typeFrame f){
 	
 	int pos_ack = 0, res;
 	char ch;	
 	
 	while(pos_ack == 0){
 	    res = read(fd,&ch,1);
-		printf("%d ",res);
-		printf("char recebido: %c \n",ch);
-	    pos_ack=stateFunc(ch);
-		
-		if(alarm_flag) //disparou alarme
-			return -1;		
+	    printf("%d ",res);
+	    printf("char recebido: %c \n",ch);
+	    pos_ack = stateFunc(ch,f);
+	    
+	    if(alarm_flag) //disparou alarme
+		return -1;		
 	}
 		
 	return 0; //sucesso
@@ -170,7 +170,9 @@ int receive_frame(int fd){
 
 int connection_receiver(int fd){	
 	//espera por uma trama SET correcta
-	receive_frame(fd);	
+	typeFrame frame_received = SET;
+	
+	receive_frame(fd,frame_received);	
 		
 	//envio de UA 
 	frame ua;
@@ -211,13 +213,13 @@ int llwrite(int fd, char * buffer, int length){
 	
 	
 	
-	return res; //num chars lidos
+	return 0; //res; //num chars lidos
 }
 
 //a ser chamada no receptor
 int llread(int fd, char * buffer){	
 	
-	//return array_length; //num caracteres lidos
+  return 0; //return array_length; //num caracteres lidos
 }
 
 //======================================
@@ -282,8 +284,10 @@ int disconnection_transmitter(int fd){
 }
 
 int disconnection_receiver(int fd){
+	
+	typeFrame frame_received = DISC, frame_received_2 = UA;
 	//receive DISC
-	receive_frame(fd);
+	receive_frame(fd,frame_received);
 	
 	frame disc;
 	
@@ -295,7 +299,7 @@ int disconnection_receiver(int fd){
 
 	(void) signal(SIGALRM, atende); //instala handler para alarme
 
-	alarme(3);
+	alarm(3);
 	alarm_flag = 0;
 	
 	if( send_frame(fd,disc) < 0 ){	//send DISC
@@ -303,7 +307,7 @@ int disconnection_receiver(int fd){
 		return -1;		
 	}	
 	
-	if( receive_frame(fd) < 0 ) {
+	if( receive_frame(fd,frame_received_2) < 0 ) {
 		printf("Receiving UA timeout.\n");
 	}
 		
