@@ -10,10 +10,22 @@ int main(int argc, char** argv){
   
   //ARGC E ARGVS... VERIFICACOES
   
-  llopen(argv[1],RECEIVER);
+  int port_fd = argv[1];
+  
+  llopen(port_fd,RECEIVER);
 
 	//LOOP
   //llread(...)  
+  
+   //para obter tamanho do ficheiro
+  int file_size = 0;
+  //recebe na primeira
+  //TODO:ARG_SIZE(NUMERO DE BYTES QUE O TAMANHO DO FICHEIRO OCUPA) lido do pacote de controlo
+  for(int i = 0 ; i < arg_size; i++){ 
+	file_size += v[i]*pow(256,i);
+  }
+  //TODO FAZER ABORDAGEM SEMELHANTE PARA L2 E L1 DAS TRAMAS I
+  
   //verifica que tipo de trama I se trata: I_DATA OU I_CONTROL_START OU I_CONTROL_END
   //SE FOR PACOTE DE CONTROLO CHAMAR CONTROL PACKET HEADER
   
@@ -22,14 +34,9 @@ int main(int argc, char** argv){
   //NO FINAL REPORTAR
   //ETC..
   
-  //para obter tamanho do ficheiro
-  int file_size = 0;
-  //TODO:ARG_SIZE(NUMERO DE BYTES QUE O TAMANHO DO FICHEIRO OCUPA) lido do pacote de controlo
-  for(int i = 0 ; i < arg_size; i++){ 
-	file_size += v[i]*pow(256,i);
-  }
+ 
   
-  //llclose();
+  llclose(port_fd, TRANSMITTER);
   
  return 0; 
 }

@@ -220,7 +220,7 @@ int llwrite(int fd, const char * buffer, int length){
 	frame[0] = FLAG;
 	frame[1] = A_EMI_REC;
 	frame[2] = N(num_sequencia);   //a verificar conforme o valor retornado na resposta (rr,rej..)
-	frame[3] = A_EMI_REC^frame[2] ;
+	frame[3] = A_EMI_REC^frame[2];
 	//============================	
 	/* incorpora dados na trama */
 	
@@ -234,27 +234,39 @@ int llwrite(int fd, const char * buffer, int length){
 	//I = [FH|PH|DATA|FT]
 	//============================
 	
-	/* STUFFING */
-	if ( write_stuffing(fd,frame, sizeof(frame)) ){
-		printf("error writing stuffed frame\n");
-		//proceder de acordo
+	while(pos_ack == 0){
+	
+		/* STUFFING */		
+		int ch_w = write_stuffing(fd,frame, sizeof(frame));
+		if ( ch_w < 0){
+			printf("error writing stuffed frame\n");
+			//proceder de acordo
+		}
+		//============================
+		
+		//espera resposta do receptor
+		typeFrame r_frame = RR; //valor de r_frame e modificado na statefunc
+		ack = receive_frame(fd,&r_frame);
+		
+		if(ack < 0){
+			printf("Timeout reached.\n");
+			//TODO agir convenientemente
+		}	
+		else{
+			if(r_frame == RR){
+				return ch_w;
+			}
+			else if (r_frame == REJ){
+				
+			}
+			else {
+				printf("Expected RR/REJ but received different frame.\n");
+				//TODO AGIR DE ACORDO
+			}
+			//verificar valor N(s) da frame
+		}
+	
 	}
-	//============================
-	
-	//espera resposta do receptor
-	typeFrame r_frame = I;
-	ack = receive_frame(fd,&r_frame);
-	
-	if(ack < 0){
-		printf("Timeout reached.\n");
-		//TODO agir convenientemente
-	}
-	
-	else{		
-	//verificar valor N(s) da frame
-	}
-	
-	
 	
 	return 0; //res; //num chars lidos
 }
@@ -268,11 +280,13 @@ int llread(int fd, char * buffer){
 	
 	//remove FH E FT
 	
-	//verificacoes
+	//verificacoes bbc2 
 	
 	//funcao receive_frame retorna campo de controlo C 
 	
 	//envio de resposta adequada
+	//construcao de RR ou REJ
+	//campo de controlo C = N(s) & (0010...) conforme seja RR ou REJ
 	
   return 0; //return array_length; //num caracteres lidos
 }

@@ -23,14 +23,15 @@ typedef struct ctrl_packet {
 int main(int argc, char** argv){
   
   //ARGC E ARGVS... VERIFICACOES
-  
-  //TODO alterar isto para valor argv correcto
+ 
+    //TODO alterar isto para valor argv correcto
   int max_data_field = argv[2]; 
   
   //TODO VERIFICAR RETORNO
-  llopen(argv[1],TRANSMITTER);
+  int port_fd = argv[1];
   
-
+  llopen(port_fd,TRANSMITTER);  //se modificar 1º param, modificar tb llclose
+  
   int file_fd;
   if((file_fd = open(FILENAME,O_RDONLY)) < -1){
 	  printf("Erro a abrir ficheiro %s.\n",FILENAME);
@@ -51,6 +52,7 @@ int main(int argc, char** argv){
   control_packet c_packet_start;  			 //c-control d-data
   c_packet_start.length_file_length = sizeof(file_size);
   
+  //converter inteiro em array de bytes
   unsigned char v[sizeof(file_size)]; 
   for(int i = 0 ; i < sizeof(file_size); i++){		
 		v[i] = (x >> 8*i) & 0x00FF;
@@ -60,8 +62,9 @@ int main(int argc, char** argv){
   c_packet_start.value_file_length = v;
   
   //TODO: VERIFICAR RETORNO DO LLWRITE
-  llwrite(fd, &c_packet_start, sizeof(c_packet_start));  //envio de packet start
+  llwrite(port_fd, &c_packet_start, sizeof(c_packet_start));  //envio de packet start
   printf("packet start\n");
+ 
   //=====================================
   
   /* ENVIO DE SEGMENTOS DO FICHEIRO */  
@@ -70,6 +73,7 @@ int main(int argc, char** argv){
 				buffer[max_data_field];
 				
   int chs_read, stop = 0;
+  
   //TODO MODIFICAR CONDICAO DO CICLO
   while(stop == 0){
  
@@ -94,7 +98,7 @@ int main(int argc, char** argv){
 	//=================================
 	
 	int d_packet_length = P_HEADER_SIZE + chs_read; //PH_size + numero de chars lidos
-	llwrite(fd,data_packet, d_packet_length);  
+	llwrite(port_fd,data_packet, d_packet_length);  
 	
 	//TODO
 	//VERIFICAR RETORNO DO LLWRITE
@@ -105,10 +109,10 @@ int main(int argc, char** argv){
  
   //ENVIA PACOTE DE CONTROLO (END)
   c_packet_start.control_field = 2;  //2 - END
-  write(fd,&c_packet_start,sizeof(c_packet_start));  //envio de packet END
+  write(port_fd,&c_packet_start,sizeof(c_packet_start));  //envio de packet END
   //=====================================
   
-  //llclose();
+  llclose(port_fd, TRANSMITTER);
   
  return 0; 
 }
