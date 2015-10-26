@@ -4,13 +4,32 @@
 #define FILENAME "pinguim.gif"
 /*TODO ALTERAR ISTO PARA VALOR CORRECTO*/
 #define FILE_LENGTH "11000"  
-
+#define NUM_ARGS 2 
 
 int main(int argc, char** argv){
   
-  //ARGC E ARGVS... VERIFICACOES
+  if(argc < NUM_ARGS + 1){
+		printf("Usage: transmitter [PORT] [BAUDRATE].\n");
+		return -1;
+	}
+
+	//TODO alterar isto para valor argv correcto
+	
+	/* VERIFICACOES */
+	if(argv[1] < 0){
+		printf("Insert correct port value.\n");
+		return -1;
+	}	
+	int port_fd = argv[1];	
+	
+	if(argv[2] < BAUDRATE_MIN || argv[2] > BAUDRATE_MAX){
+		printf("Baudrate accepted values: [%s,%s].\n",BAUDRATE_MIN,BAUDRATE_MAX);
+		return -1;
+	}	
+	baudrate = argv[2];
   
   int port_fd = argv[1];
+  //=========================
   
   llopen(port_fd,RECEIVER);
 

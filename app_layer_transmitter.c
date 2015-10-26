@@ -2,8 +2,9 @@
 #include "protocolo.h"
 
 #define FILENAME "pinguim.gif"
-/*TODO ALTERAR ISTO PARA VALOR CORRECTO*/
-#define P_HEADER_SIZE 	4 	/* BYTES */
+#define P_HEADER_SIZE 	4 			/* BYTES */
+#define FILE_SECTION_MAX_SIZE 5000  /* BYTES */
+#define NUM_ARGS 3
 
 typedef struct ctrl_packet {
  unsigned char control_field = I_CONTROL_START;  //START POR DEFEITO
@@ -22,15 +23,37 @@ typedef struct ctrl_packet {
 
 int main(int argc, char** argv){
   
-  //ARGC E ARGVS... VERIFICACOES
- 
-    //TODO alterar isto para valor argv correcto
-  int max_data_field = argv[2]; 
+	if(argc < NUM_ARGS + 1){
+		printf("Usage: transmitter [PORT] [BAUDRATE] [FRAGMENT_SIZE BYTES].\n");
+		return -1;
+	}
+
+	//TODO alterar isto para valor argv correcto
+	
+	/* VERIFICACOES */
+	if(argv[1] < 0){
+		printf("Insert correct port value.\n");
+		return -1;
+	}	
+	int port_fd = argv[1];	
+	
+	if(argv[2] < BAUDRATE_MIN || argv[2] > BAUDRATE_MAX){
+		printf("Baudrate accepted values: [%s,%s].\n",BAUDRATE_MIN,BAUDRATE_MAX);
+		return -1;
+	}	
+	baudrate = argv[2];
+
+	if(argv[3] < 0){
+		printf("Introduce a correct value for data's frames max size./n");
+		return -1;
+	}	
+	int max_data_field = argv[3]; 
+	//===================
+  
   
   //TODO VERIFICAR RETORNO
-  int port_fd = argv[1];
-  
   llopen(port_fd,TRANSMITTER);  //se modificar 1º param, modificar tb llclose
+  
   
   int file_fd;
   if((file_fd = open(FILENAME,O_RDONLY)) < -1){
@@ -45,7 +68,13 @@ int main(int argc, char** argv){
 	  return -1;	  
   }    
   
-  int file_size = fileStat.st_size;
+  int file_size = fileStat.st_size; //TAMANHO DO FICHEIRO
+  
+  if(max_data_field > file_size){ 
+	  printf("File section size input value is greater than file size, default value set.\n");
+	  max_data_field = FILE_SECTION_MAX_SIZE;	  
+  }
+    
   int seq_actual = 0;
     
   /* PACOTE DE CONTROLO (START) */
@@ -64,7 +93,6 @@ int main(int argc, char** argv){
   //TODO: VERIFICAR RETORNO DO LLWRITE
   llwrite(port_fd, &c_packet_start, sizeof(c_packet_start));  //envio de packet start
   printf("packet start\n");
- 
   //=====================================
   
   /* ENVIO DE SEGMENTOS DO FICHEIRO */  

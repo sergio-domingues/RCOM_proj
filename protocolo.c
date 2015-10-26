@@ -39,7 +39,7 @@ int port_setting(int fd){
 	printf("Guarda configs porta.\n");
 	
     bzero(&newtio, sizeof(newtio));
-    newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+    newtio.c_cflag = baudrate | CS8 | CLOCAL | CREAD;
     newtio.c_iflag = IGNPAR;
     newtio.c_oflag = 0;	
     newtio.c_lflag = 0; 		/* set input mode (non-canonical, no echo,...) */

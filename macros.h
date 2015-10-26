@@ -45,7 +45,10 @@
 #define MAX_RETRIES 3
 #define ALARM_SPAN 3
 #define MAX_FRAME_I 256   /*TODO USER DEFINE ESTE TAMANHO*/
+#define BAUDRATE_MIN 500
+#define BAUDRATE_MAX 110000
 
+int baudrate;
 
 typedef enum { SET, DISC, UA, RR, REJ, I } typeFrame;
 
