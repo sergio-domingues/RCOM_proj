@@ -1,12 +1,12 @@
 #include "macros.h"
 #include "statemachine.h"
 
-
 static frame receiveFrame;
 
-//=============================
 
-int start(char c,typeFrame f){
+/*Uso de parametro typeFrame*f necessario para 
+statemachine tolerar casos de tramas I*/
+int start(char c,typeFrame* f){
 	printf("start\n");   		
 	
 	if(c == FLAG){
@@ -16,7 +16,7 @@ int start(char c,typeFrame f){
 	return 0;
 }
 
-int flag_RCV(char c,typeFrame f){
+int flag_RCV(char c,typeFrame* f){
      printf("flag_RCV\n");	
 
      if(c == A_EMI_REC || c== A_REC_EMI){
@@ -31,61 +31,67 @@ int flag_RCV(char c,typeFrame f){
      return 0;
 }
 
-int A_RCV(char c,typeFrame f){
+int A_RCV(char c,typeFrame* f){
 	printf("A_RCV\n");
+	
+	int error = 0;
+	
+	//defining what type of frame was received
+	switch(c){		
+		case C_SET:
+			*f = SET;
+		break;
 
-	switch(f){
+		case C_UA:
+			*f = UA;
+		break;
 
-	case SET:
-		if(c == C_SET){
-		stateFunc = &C_RCV;
-		receiveFrame.c = c;	
-		}
-	break;
+		case C_DISC:
+			*f = DISC;
+		break;
 
-	case UA:
-		if(c == C_UA){
-		stateFunc = &C_RCV;
-		receiveFrame.c = c;	
-		}
-	break;
+		case C_RR:
+			*f = RR;			
+		break;
 
-	case DISC:
-		if(c == C_DISC){
-		stateFunc = &C_RCV;
-		receiveFrame.c = c;	
-		}
-	break;
-
-	case RR:
-		if(c == C_RR){
-		stateFunc = &C_RCV;
-		receiveFrame.c = c;	
-		}
-	break;
-
-	case REJ:
-		if(c == C_REJ){
-		stateFunc = &C_RCV;
-		receiveFrame.c = c;	
-		}
-	break;
-
-	default:
-		printf("Error with type of frame");
-	break;
+		case C_REJ:
+			*f = REJ;			
+		break;
+		
+		case C_I_1:
+			*f = I;
+			stateFunc = &stop;
+			receiveFrame.c = c;	
+		return 0; //nao existe mais nada para verificar
+				
+		case C_I_0:
+			*f = I;
+			stateFunc = &stop;
+			receiveFrame.c = c;	
+		return 0;//nao existe mais nada para verificar
+		
+		default:
+			printf("StateMachine: Error with type of frame\n");
+			error = 1;
+		break;
 	}
-
+	
+	//sucesso
+	if(error == 0){
+		stateFunc = &C_RCV;
+		receiveFrame.c = c;	
+		return 0;
+	}
+	
     if ( c == FLAG)
 		stateFunc = &flag_RCV;
     else 
 		stateFunc = &start;
 
 	return 0;
-
 }
 
-int C_RCV(char c,typeFrame f){
+int C_RCV(char c,typeFrame* f){
 	printf("C_RCV\n");	
     if( c == (receiveFrame.a^receiveFrame.c)){
 		stateFunc = &BCC;
@@ -99,7 +105,7 @@ int C_RCV(char c,typeFrame f){
 	return 0;
 }
 
-int BCC(char c,typeFrame f){
+int BCC(char c,typeFrame* f){
 printf("BCC\n");	 
     if (c == FLAG){
 	    receiveFrame.flag2 = FLAG;
@@ -111,8 +117,8 @@ printf("BCC\n");
     return 0;	
 }
 
-int stop(char c,typeFrame f){
+int stop(char c,typeFrame* f){
 	printf("stop\n");
 	stateFunc = &start;
-	return 1;		
+	return receiveFrame.c; //valor a ser considerado nas calls	
 }

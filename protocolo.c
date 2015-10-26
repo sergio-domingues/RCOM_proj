@@ -12,7 +12,7 @@ static int port_setting(int fd);
 
 static int transmission_frame_SU(int fd, frame send);	//loop send/receive till correct answer
 static int send_frame(int fd, frame send);
-static int receive_frame(int fd, typeFrame f);
+static int receive_frame(int fd, typeFrame* f);
 
 static unsigned char calc_bcc(const char* buffer, int length)
 //================================
@@ -20,7 +20,6 @@ static unsigned char calc_bcc(const char* buffer, int length)
 
 static struct termios oldtio; //boa pratica limited scope
 static int alarm_flag = 1, counter = 0;
-static char[MAX_FRAME_I] I_frame;
 
 //TODO CRIAR struct link layer para encapsular informacao
 //no ficheiro .h declarar la a variavel e aqui declarar a descriçao da struct
@@ -114,7 +113,7 @@ int transmission_frame_SU(int fd, frame send){
 		  
 	(void) signal(SIGALRM, atende); //instala handler para alarme
 	
-	typeFrame frame_received = UA;
+	typeFrame frame_received = DISC;
 	
 	//loop enqt (emissor not connected receiver) até max_retries	
 	while(counter < MAX_RETRIES) {
@@ -129,14 +128,14 @@ int transmission_frame_SU(int fd, frame send){
 			exit(1);
 		}
 		
-		if ( receive_frame(fd, frame_received) == 0 ) { //recebe UA frame com sucesso
-			printf("TRANSMITTER-RECEIVER connection established.\n");
+		if ( receive_frame(fd, &frame_received) == 0 ) { //recebe UA frame com sucesso
+			printf("TRANSMITTER-RECEIVER (dis)connection established.\n");
 			break;
 		}	
 	}
 	
 	if(counter == MAX_RETRIES){ //nao conseguiu estabelecer conexao
-		printf("connection not established.\n");
+		printf("(dis)connection not established.\n");
 		return -1;
 	}
 			
@@ -154,7 +153,7 @@ int send_frame(int fd, frame send){
 }
 
 
-int receive_frame(int fd, typeFrame f){
+int receive_frame(int fd, typeFrame* f){
 	
 	int pos_ack = 0, res;
 	char ch;	
@@ -169,7 +168,7 @@ int receive_frame(int fd, typeFrame f){
 		return -1;		
 	}
 		
-	return 0; //sucesso
+	return pos_ack; //campo de controlo da trama, retornado pela statemachine
 }
 
 
@@ -177,7 +176,7 @@ int connection_receiver(int fd){
 	//espera por uma trama SET correcta
 	typeFrame frame_received = SET;
 	
-	receive_frame(fd,frame_received);	
+	receive_frame(fd,&frame_received);	
 		
 	//envio de UA 
 	frame ua;
@@ -211,6 +210,8 @@ unsigned char calc_bcc(const char* buffer, int length){
 //a ser chamada no emissor
 int llwrite(int fd, const char * buffer, int length){
 	
+	int ack;
+	//construcao da trama I
 	unsigned char frame[FRAME_HEADER_SIZE + length + 2]; //2 = bcc2 + flag
 	
 	frame[0] = FLAG;
@@ -218,22 +219,47 @@ int llwrite(int fd, const char * buffer, int length){
 	frame[2] = N(0);
 	frame[3] = A_EMI_REC^N(0));
 	
-	memcpy(&frame[4],buffer,length); //incorpora dados na frame
+	memcpy(&frame[4],buffer,length); //incorpora dados na trama
 	
 	//calcula bcc2 da frame e guarda valor
 	frame[sizeof(frame)-2] = calc_bcc(frame, sizeof(frame)-2);
 	frame[sizeof(frame)-1] = FLAG;
 	
-	if (write_stuffing(fd,frame, sizeof(frame)) ){
+	//stuffing da trame e envio da mesma
+	if ( write_stuffing(fd,frame, sizeof(frame)) ){
 		printf("error writing stuffed frame\n");
 		//proceder de acordo
 	}
+	
+	//espera resposta do receptor
+	typeFrame r_frame = I;
+	ack = receive_frame(fd,&r_frame);
+	
+	if(ack < 0){
+		printf("Timeout reached.\n");
+		//TODO agir convenientemente
+	}
+	
+	else{		
+	//verificar valor N(s) da frame
+	}
+	
+	
 	
 	return 0; //res; //num chars lidos
 }
 
 //a ser chamada no receptor
 int llread(int fd, char * buffer){	
+	//mais tarde completar com: store do numero de segmentos a ler (info recebida no 1º frame), etc
+		
+	//receber frame 
+	
+	//verificacoes
+	
+  //funcao receive_frame retorna campo de controlo C 
+	
+  //envio de resposta adequada
 	
   return 0; //return array_length; //num caracteres lidos
 }
@@ -281,8 +307,7 @@ int disconnection_transmitter(int fd){
 	}
 	printf("DISConnected.\n");
 		
-	frame ua;
-	
+	frame ua;	
 	ua.flag = FLAG;
 	ua.a = A_EMI_REC;
 	ua.c = C_UA;
@@ -303,7 +328,7 @@ int disconnection_receiver(int fd){
 	
 	typeFrame frame_received = DISC, frame_received_2 = UA;
 	//receive DISC
-	receive_frame(fd,frame_received);
+	receive_frame(fd,&frame_received);
 	
 	frame disc;
 	
@@ -314,16 +339,16 @@ int disconnection_receiver(int fd){
 	disc.flag2 = FLAG;
 
 	(void) signal(SIGALRM, atende); //instala handler para alarme
-
-	alarm(3);
-	alarm_flag = 0;
 	
 	if( send_frame(fd,disc) < 0 ){	//send DISC
 		printf("Error sending DISC.\n");
 		return -1;		
 	}	
 	
-	if( receive_frame(fd,frame_received_2) < 0 ) {
+	alarm(3); //timeout
+	alarm_flag = 0;
+	
+	if( receive_frame(fd,&frame_received_2) < 0 ) {
 		printf("Receiving UA timeout.\n");
 	}
 		

@@ -25,6 +25,8 @@
 #define C_UA			0x03
 #define C_RR			0x21
 #define C_REJ			0x23
+#define C_I_1			0x20 //campo c das tramas I N(s)
+#define C_I_0			0x00
 
 #define TRANSMITTER 0
 #define RECEIVER 1
@@ -41,7 +43,7 @@
 
 typedef enum { SET, DISC, UA, RR, REJ, I } typeFrame;
 
-typedef struct frame_struct {
+typedef struct frame_struct {	
 	 char flag;
 	 char a;
 	 char c;

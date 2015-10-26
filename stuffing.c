@@ -20,7 +20,7 @@ int write_stuffing(int fd, const char * buffer,int length){
 		}
 		
 		if(res != 1)
-			return -1;
+			return -1;	
 	}
 	
 	return 0;
