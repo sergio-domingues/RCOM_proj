@@ -35,19 +35,19 @@ int main(int argc, char** argv){
 		printf("Insert correct port value.\n");
 		return -1;
 	}	
-	int port_fd = argv[1];	
+	int port_fd = atoi(argv[1]);	
 	
-	if(argv[2] < BAUDRATE_MIN || argv[2] > BAUDRATE_MAX){
+	if( atoi(argv[2]) < BAUDRATE_MIN || atoi(argv[2]) > BAUDRATE_MAX){
 		printf("Baudrate accepted values: [%s,%s].\n",BAUDRATE_MIN,BAUDRATE_MAX);
 		return -1;
 	}	
-	baudrate = argv[2];
+	baudrate = atoi(argv[2]);
 
-	if(argv[3] < 0){
+	if(atoi(argv[3]) < 0){
 		printf("Introduce a correct value for data's frames max size./n");
 		return -1;
 	}	
-	int max_data_field = argv[3]; 
+	int max_data_field = atoi(argv[3]); 
   //===================
   
   /* OPEN PORT */

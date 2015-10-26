@@ -212,19 +212,20 @@ unsigned char calc_bcc(const char* buffer, int length){
 int llwrite(int fd, const char * buffer, int length){	
 	//RECEIVES I = [PH|DATA]
 	
-	int ack;
+	int ack, retries = 0;
 	
 	/* BEGINNING FRAME HEADER */
+	
 	unsigned char frame[FRAME_HEADER_SIZE + length + 2]; //2 = bcc2 + flag
 	
 	frame[0] = FLAG;
 	frame[1] = A_EMI_REC;
 	frame[2] = N(num_sequencia);   //a verificar conforme o valor retornado na resposta (rr,rej..)
 	frame[3] = A_EMI_REC^frame[2];
-	//============================	
-	
+	//============================		
 	/* 	incorpora dados na trama 	*/	
 	// I = [FH]	
+	
 	memcpy(&frame[4],buffer,length);  // I = [FH|PH|DATA]	
 	//============================
 	
@@ -235,41 +236,69 @@ int llwrite(int fd, const char * buffer, int length){
 	//I = [FH|PH|DATA|FT]
 	//============================
 	
-	while(pos_ack == 0){
-	
+	while( (retries < MAX_RETRIES) && retries > 0){	
 		/*		 STUFFING 		*/		
+		
 		int chs_w = write_stuffing(fd,frame, sizeof(frame));
 		if (chs_w < 0){
-			printf("error writing stuffed frame\n");
-			//proceder de acordo
+			printf("error writting stuffed frame\n");
+			return -1;
 		}
-		//============================
+		//============================		
 		
-		//espera resposta do receptor
-		typeFrame r_frame = RR; //valor de r_frame e modificado na statefunc
-		ack = receive_frame(fd,&r_frame);
+		//espera resposta do receptor			
+		int inner_responses = 0; //respostas aceitaveis
 		
-		if(ack < 0){
-			printf("Timeout reached.\n");
-			//TODO agir convenientemente
-		}	
-		else{
-			if(r_frame == RR){ //positive acknowledge
-				return ch_ws;
+		//remover parte do while se estiver a dar coco
+		while(inner_responses < MAX_RETRIES){ //no caso de receber resposta inesperada ("sem valor logico") 
+			
+			typeFrame r_frame = RR; //valor de r_frame e modificado na statefunc
+			ack = receive_frame(fd,&r_frame);  //valor do campo de controlo r, N(r)
+			
+			if(ack < 0){ //espera por uma resposta do receptor
+				printf("Timeout reached.\n");
+				inner_responses++;
+				continue; 
+			}	
+			else{
+				if(r_frame == RR){ //positive acknowledge				
+					
+					if( (ack >> 5) != num_sequencia){
+						retries = -1; //termina ciclo exterior "sucesso"
+						break;
+					} else { 		//valor nao esperado
+						inner_responses++;
+						continue; //tenta receber resposta com valor aceitavel
+					}
+				}
+				else if (r_frame == REJ){	 //rej acknowledge					
+					
+					if( (ack >> 5) != num_sequencia){  //ignore response
+						inner_responses++;
+						continue; //tenta receber resposta com valor aceitavel
+					}
+					else {
+						retries++;
+						break; //retransmit frame
+					}
+				}
+				else {
+					printf("Expected RR/REJ but received different frame.\n");
+					inner_responses++;
+					continue; 
+				}
 			}
-			else if (r_frame == REJ){ //rej acknowledge
-				
-			}
-			else {
-				printf("Expected RR/REJ but received different frame.\n");
-				//TODO AGIR DE ACORDO
-			}
-			//verificar valor N(s) da frame
 		}
-	
+		//nao recebeu resposta valida retorna programa
+		if(inner_responses == MAX_RETRIES) 
+			return -1;			
 	}
 	
-	return 0; //res; //num chars lidos
+	if(retries == MAX_RETRIES)  //ATINGIU NUM MAXIMO DE RETRANSMISSOES
+		return -1;
+	
+	num_sequencia ? 0 : 1;  //update num_seq 
+	return chs_w;
 }
 
 //a ser chamada no receptor
@@ -287,6 +316,7 @@ int llread(int fd, char * buffer){
 	
 	//envio de resposta adequada
 	//construcao de RR ou REJ
+	//ter em conta o campo C da trama I para construir:
 	//campo de controlo C = N(s) & (0010...) conforme seja RR ou REJ
 	
   return 0; //return array_length; //num caracteres lidos
