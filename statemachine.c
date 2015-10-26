@@ -3,7 +3,6 @@
 
 static frame receiveFrame;
 
-
 /*Uso de parametro typeFrame*f necessario para 
 statemachine tolerar casos de tramas I*/
 int start(char c,typeFrame* f){
@@ -60,15 +59,11 @@ int A_RCV(char c,typeFrame* f){
 		
 		case C_I_1:
 			*f = I;
-			stateFunc = &stop;
-			receiveFrame.c = c;	
-		return 0; //nao existe mais nada para verificar
+		break; 
 				
 		case C_I_0:
 			*f = I;
-			stateFunc = &stop;
-			receiveFrame.c = c;	
-		return 0;//nao existe mais nada para verificar
+		break;
 		
 		default:
 			printf("StateMachine: Error with type of frame\n");
@@ -96,6 +91,12 @@ int C_RCV(char c,typeFrame* f){
     if( c == (receiveFrame.a^receiveFrame.c)){
 		stateFunc = &BCC;
 		receiveFrame.bcc = c;
+		
+		if(f == I){
+			stateFunc = &start;
+			//nao ha mais nada a receber (trama I)
+			return c; //retorna valor campo controlo
+		}		
 	}
     else if ( c == FLAG)
 		stateFunc = &flag_RCV;
@@ -112,7 +113,7 @@ printf("BCC\n");
 	    stateFunc = &stop;
 	}
     else 
-	stateFunc = &start;
+		stateFunc = &start;
 	
     return 0;	
 }
