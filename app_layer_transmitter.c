@@ -48,13 +48,16 @@ int main(int argc, char** argv){
 		return -1;
 	}	
 	int max_data_field = argv[3]; 
-	//===================
+  //===================
   
+  /* OPEN PORT */
   
   //TODO VERIFICAR RETORNO
   llopen(port_fd,TRANSMITTER);  //se modificar 1º param, modificar tb llclose
   
+  //============================
   
+  /* OPEN FILE */
   int file_fd;
   if((file_fd = open(FILENAME,O_RDONLY)) < -1){
 	  printf("Erro a abrir ficheiro %s.\n",FILENAME);
@@ -74,26 +77,29 @@ int main(int argc, char** argv){
 	  printf("File section size input value is greater than file size, default value set.\n");
 	  max_data_field = FILE_SECTION_MAX_SIZE;	  
   }
-    
+  //====================================== 
+  /* 	 	DATA TRANSMISSION 			*/
+  
   int seq_actual = 0;
-    
+	
   /* PACOTE DE CONTROLO (START) */
   control_packet c_packet_start;  			 //c-control d-data
   c_packet_start.length_file_length = sizeof(file_size);
   
   //converter inteiro em array de bytes
   unsigned char v[sizeof(file_size)]; 
-  for(int i = 0 ; i < sizeof(file_size); i++){		
+  for(int i = 0; i < sizeof(file_size); i++){		
 		v[i] = (x >> 8*i) & 0x00FF;
   }
   
   //em cada posicao do array esta um byte do tamanho shiftado
   c_packet_start.value_file_length = v;
   
+  /* 		SENDING DATA CONTROL FRAME	     	*/
   //TODO: VERIFICAR RETORNO DO LLWRITE
   llwrite(port_fd, &c_packet_start, sizeof(c_packet_start));  //envio de packet start
-  printf("packet start\n");
-  //=====================================
+  printf("packet start send\n");
+  
   
   /* ENVIO DE SEGMENTOS DO FICHEIRO */  
   
@@ -115,14 +121,15 @@ int main(int argc, char** argv){
 		stop == 1;	//TERMINAR CICLO //TODO VERIFICAR ISTO	
 	}	
 		
-	/* DATA PACKET HEADER */
+	/* 	DATA PACKET HEADER 	*/
 	data_packet[0] = 0;
 	data_packet[1] = seq_actual;
 	data_packet[2] = (0xFF00 &  chs_read) >> 8; //L2
 	data_packet[3] = 0x00FF & chs_read;         //L1
 	
-	//incorpora fragmento do ficheiro | I = [PH|___]
+	//incorpora fragmento do ficheiro |> I = [PH|___]
 	memcpy(&data_packet[4], buffer, chs_read); //data_packet = [PH|DATA]
+	
 	//=================================
 	
 	int d_packet_length = P_HEADER_SIZE + chs_read; //PH_size + numero de chars lidos
