@@ -1,6 +1,7 @@
 #include "macros.h"
 
 #define FRAME_HEADER_SIZE 4  //BYTES
+#define PACKET_HEADER_SIZE 
 
 //nao colocar no ficheiro .h   (limited scope)
 static int connection_transmitter(int fd);
@@ -20,6 +21,7 @@ static unsigned char calc_bcc(const char* buffer, int length)
 
 static struct termios oldtio; //boa pratica limited scope
 static int alarm_flag = 1, counter = 0;
+static int num_sequencia = 0;
 
 //TODO CRIAR struct link layer para encapsular informacao
 //no ficheiro .h declarar la a variavel e aqui declarar a descriçao da struct
@@ -200,36 +202,44 @@ int connection_receiver(int fd){
 unsigned char calc_bcc(const char* buffer, int length){	
 	unsigned char bcc = 0;	
 	int i;
-	for(i=0; i < length; i++){		
-		bcc ^= buffer[1];
-	}
-	
+	for(i=0; i < length; i++){	//4:IGNORA PRIMEIROS 4 BYTES (FLAG/A/C/BCC)
+		bcc ^= buffer[i];
+	}	
 	return bcc;
 }
 
 //a ser chamada no emissor
-int llwrite(int fd, const char * buffer, int length){
+int llwrite(int fd, const char * buffer, int length){	
+	//RECEIVES I = [PH|DATA]
 	
 	int ack;
-	//construcao da trama I
+	
+	/* BEGINNING FRAME HEADER */
 	unsigned char frame[FRAME_HEADER_SIZE + length + 2]; //2 = bcc2 + flag
 	
 	frame[0] = FLAG;
 	frame[1] = A_EMI_REC;
-	frame[2] = N(0);
-	frame[3] = A_EMI_REC^N(0));
+	frame[2] = N(num_sequencia);   //a verificar conforme o valor retornado na resposta (rr,rej..)
+	frame[3] = A_EMI_REC^frame[2] ;
+	//============================	
+	/* incorpora dados na trama */
 	
-	memcpy(&frame[4],buffer,length); //incorpora dados na trama
+	// I = [FH]	
+	memcpy(&frame[4],buffer,length);  // I = [FH|PH|DATA]	
+	//============================
+	/* ENDING FRAME HEADER */
 	
-	//calcula bcc2 da frame e guarda valor
-	frame[sizeof(frame)-2] = calc_bcc(frame, sizeof(frame)-2);
+	frame[sizeof(frame)-2] = calc_bcc(buffer, length); //calcula bcc2 do campo de dados
 	frame[sizeof(frame)-1] = FLAG;
+	//I = [FH|PH|DATA|FT]
+	//============================
 	
-	//stuffing da trame e envio da mesma
+	/* STUFFING */
 	if ( write_stuffing(fd,frame, sizeof(frame)) ){
 		printf("error writing stuffed frame\n");
 		//proceder de acordo
 	}
+	//============================
 	
 	//espera resposta do receptor
 	typeFrame r_frame = I;
@@ -254,12 +264,15 @@ int llread(int fd, char * buffer){
 	//mais tarde completar com: store do numero de segmentos a ler (info recebida no 1º frame), etc
 		
 	//receber frame 
+	//ter em conta o L2 e L1
+	
+	//remove FH E FT
 	
 	//verificacoes
 	
-  //funcao receive_frame retorna campo de controlo C 
+	//funcao receive_frame retorna campo de controlo C 
 	
-  //envio de resposta adequada
+	//envio de resposta adequada
 	
   return 0; //return array_length; //num caracteres lidos
 }

@@ -3,12 +3,12 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <signal.h>
 
 
@@ -27,6 +27,12 @@
 #define C_REJ			0x23
 #define C_I_1			0x20 //campo c das tramas I N(s)
 #define C_I_0			0x00
+#define I_CONTROL_DATA	0x00
+#define I_CONTROL_START	0x01 
+#define I_CONTROL_END	0x02
+
+#define CTRL_ARG_FILE_LENGTH	0x00 //tamanho do ficheiro
+#define CTRL_ARG_FILE_NAME		0x01 //nome do ficheiro
 
 #define TRANSMITTER 0
 #define RECEIVER 1
