@@ -180,8 +180,6 @@ int connection_receiver(int fd){
 //======================================
 
 int send_frame(int fd, frame send,int length){
-	
-	printf("Envio da trama\n length:%d\n",length);	
 	return write(fd,&send,length);	
 }
 
@@ -433,7 +431,7 @@ int disconnection_receiver(int fd){
 		printf("Receiving UA timeout.\n");
 	}
 	
-	fprintf(stderr,"RECEIVER:Received UA.\n");
+	fprintf(stderr,"RECEIVER:Received UA.ret:%d\n");
 	counter = 0;
 	
 	return 0;

@@ -16,13 +16,11 @@ int main(int argc, char** argv)
 	int port;
 	sscanf(argv[1],"/dev/ttyS%d",&port);
 
-	int fd= llopen(port,RECEIVER);
-	
-	printf("acabou");
-	
-	
+	int fd = llopen(port,RECEIVER);
+		
 	llclose(fd,RECEIVER);
 
+	printf("acabou.\n");
 
 	return 0;
 }
