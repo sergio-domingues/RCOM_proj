@@ -127,7 +127,7 @@ int transmission_frame_SU(int fd, frame send,int length){
 			exit(1);
 		}
 		
-		if ( receive_frame(fd, &frame_received) == 0 ) { //recebe UA frame com sucesso
+		if ( receive_frame(fd, &frame_received) != 0 ) { //recebe UA frame com sucesso
 			printf("TRANSMITTER-RECEIVER (dis)connection established.\n");
 			break;
 		}		
