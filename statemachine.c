@@ -114,7 +114,6 @@ printf("BCC\n");
     if (c == FLAG){
 	    receiveFrame.flag2 = FLAG;
 	    return receiveFrame.c;
-	    //stateFunc = &stop;
 	}
     else 
 		stateFunc = &start;
@@ -122,8 +121,3 @@ printf("BCC\n");
     return 0;	
 }
 
-int stop(char c,typeFrame* f){
-	printf("stop\n");
-	stateFunc = &start;
-	return receiveFrame.c; //valor a ser considerado nas calls	
-}
