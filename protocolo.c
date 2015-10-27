@@ -144,7 +144,7 @@ int transmission_frame_SU(int fd, frame send,int length){
 
 int send_frame(int fd, frame send,int length){
 	
-	printf("Envio da trama\n");	
+	printf("Envio da trama\n length:%d\n",length);	
 	return write(fd,&send,length);	
 }
 
