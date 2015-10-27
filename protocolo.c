@@ -433,7 +433,7 @@ int disconnection_receiver(int fd){
 		printf("Receiving UA timeout.\n");
 	}
 	
-	fprintf(stderror,"RECEIVER:Received UA.\n");
+	fprintf(stderr,"RECEIVER:Received UA.\n");
 	counter = 0;
 	
 	return 0;
