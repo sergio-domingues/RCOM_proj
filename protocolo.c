@@ -90,30 +90,14 @@ int llopen(int porta,int tipo){
     return fd;	
 }
 
-
-int connection_transmitter(int fd){	
-	
-	//envia trama SET
-	frame set;
-	
-	set.flag=FLAG;
-	set.a=A_EMI_REC;
-	set.c=C_SET;
-	set.bcc=A_EMI_REC^C_SET;
-	set.flag2=FLAG;	
-	
-	//loop till send/receive succesfully
-	transmission_frame_SU(fd,set,sizeof(set));
-
-	return fd;
-}
-
 // atende alarme
 void atende(){              
 	printf("alarme # %d\n", counter);
 	alarm_flag = 1;
 	counter++;
+	signal(SIGALRM, atende); //reinstala handler
 }
+
 
 int transmission_frame_SU(int fd, frame send,int length){
 	
@@ -141,6 +125,53 @@ int transmission_frame_SU(int fd, frame send,int length){
 	return 0; //success	
 }
 
+
+int connection_transmitter(int fd){		
+	//envia trama SET
+	frame set;
+	
+	set.flag=FLAG;
+	set.a=A_EMI_REC;
+	set.c=C_SET;
+	set.bcc=A_EMI_REC^C_SET;
+	set.flag2=FLAG;	
+	
+	//loop till send/receive succesfully
+	transmission_frame_SU(fd,set,sizeof(set));
+
+	return fd;
+}
+
+int connection_receiver(int fd){
+
+	//TODO: USAR TIMEOUT RETORNADO POR RECEIVE_FRAME PARA RETRANSMISSOES OU RETORNO
+
+	//espera por uma trama SET correcta
+	typeFrame frame_received = SET;
+	
+	receive_frame(fd,&frame_received);
+
+	if(frame_received != SET) //TODO USAR VALOR RETORNADO
+	  return -2;
+		
+	//envio de UA 
+	frame ua;
+	
+	ua.flag = FLAG;
+	ua.a = A_EMI_REC;
+	ua.c = C_UA;
+	ua.bcc = A_EMI_REC^C_UA;
+	ua.flag2 = FLAG;		
+	
+	if ( send_frame(fd,ua,sizeof(ua)) < 0){
+		printf("Erro na escrita da trama UA");		
+		return -1;
+	}	
+	printf("UA frame sent.\n");
+	
+	return fd;
+}
+//======================================
 
 int send_frame(int fd, frame send,int length){
 	
@@ -172,38 +203,6 @@ int receive_frame(int fd, typeFrame* f){
 		
 	return pos_ack; //campo de controlo da trama, retornado pela statemachine
 }
-
-
-int connection_receiver(int fd){	
-
-	//TODO: USAR TIMEOUT RETORNADO POR RECEIVE_FRAME PARA RETRANSMISSOES OU RETORNO
-
-	//espera por uma trama SET correcta
-	typeFrame frame_received = SET;
-	
-	receive_frame(fd,&frame_received);
-
-	if(frame_received != SET)
-	  return -2;
-		
-	//envio de UA 
-	frame ua;
-	
-	ua.flag = FLAG;
-	ua.a = A_EMI_REC;
-	ua.c = C_UA;
-	ua.bcc = A_EMI_REC^C_UA;
-	ua.flag2 = FLAG;		
-	
-	if ( send_frame(fd,ua,sizeof(ua)) < 0){
-		printf("Erro na escrita da trama UA");		
-		return -1;
-	}	
-	printf("UA frame sent.\n");
-	
-	return fd;
-}
-//======================================
 
 unsigned char calc_bcc(const char* buffer, int length){	
 	unsigned char bcc = 0;	
