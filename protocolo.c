@@ -322,7 +322,6 @@ int llwrite(int fd, char * buffer, int length){
 
 //a ser chamada no receptor
 int llread(int fd, char * buffer){	
-	//mais tarde completar com: store do numero de segmentos a ler (info recebida no 1º frame), etc
   
 	typeFrame frame_received = I;
 	int ack, ret;
