@@ -17,6 +17,7 @@ static int transmission_frame_SU(int fd, frame send,int length);	//loop send/rec
 static int send_frame(int fd, frame send,int length);
 static int receive_frame(int fd, typeFrame* f);
 
+static void atende(int signal);
 static unsigned char calc_bcc(const char* buffer, int length);
 //================================
 //>>>>GLOBALS
