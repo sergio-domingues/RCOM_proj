@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 	printf("acabou");
 	
 	
-	//llclose(fd,RECEIVER);
+	llclose(fd,RECEIVER);
 
 
 	return 0;

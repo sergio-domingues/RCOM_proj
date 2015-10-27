@@ -42,9 +42,9 @@ int main(int argc, char** argv)
 	int fd = llopen(port,TRANSMITTER);
 
 	//llwrite(fd,buffer,length);  
-	printf("acabou");
-	//llclose(fd,TRANSMITTER);
-
+	
+	llclose(fd,TRANSMITTER);
+printf("acabou");
 	return 0;
     
 }

@@ -193,7 +193,6 @@ int receive_frame(int fd, typeFrame* f){
 	    res = read(fd,&ch,1);
 	    printf("char recebido: 0x%X \n",ch);
 	    pos_ack = stateFunc(ch,f);
-	    printf("pos_ack:%d\n",pos_ack);
 	    
 	    if(alarm_flag){ //disparou alarme
 			alarm_flag = 0;
