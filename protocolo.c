@@ -77,10 +77,9 @@ int llopen(int porta,int tipo){
 	printf("Inicia comunicao com dispostivo.\n");	
 	
 	port_setting(fd); //configura port
-	
-	
+		
 	 // Setup the sighub handler
-    sa.sa_handler = &handle_signal;	
+    sa.sa_handler = &atende;	
 	sigaction(SIGALRM, &sa, NULL);
 	printf("setup SIGALARM handler.\n");	
 	

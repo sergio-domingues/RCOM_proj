@@ -44,7 +44,7 @@ int main(int argc, char** argv)
 	//llwrite(fd,buffer,length);  
 	
 	llclose(fd,TRANSMITTER);
-printf("acabou");
+	printf("acabou.\n");
 	return 0;
     
 }
