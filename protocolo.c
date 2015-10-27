@@ -144,7 +144,7 @@ int transmission_frame_SU(int fd, frame send,int length){
 
 int send_frame(int fd, frame send,int length){
 	
-	printf("Envio da trama");	
+	printf("Envio da trama\n");	
 	return write(fd,&send,length);	
 }
 
@@ -160,13 +160,13 @@ int receive_frame(int fd, typeFrame* f){
 	
 	while(pos_ack == 0){
 	    res = read(fd,&ch,1);
-	    printf("char recebido: %d \n",ch);
+	    printf("char recebido: 0x%X \n",ch);
 	    pos_ack = stateFunc(ch,f);
 	    
 	    if(alarm_flag){ //disparou alarme
 			alarm_flag = 0;
 			return -1;		
-		}
+	    }
 	}
 		
 	return pos_ack; //campo de controlo da trama, retornado pela statemachine
@@ -180,7 +180,10 @@ int connection_receiver(int fd){
 	//espera por uma trama SET correcta
 	typeFrame frame_received = SET;
 	
-	receive_frame(fd,&frame_received);	
+	receive_frame(fd,&frame_received);
+
+	if(frame_received != SET)
+	  return -2;
 		
 	//envio de UA 
 	frame ua;
@@ -312,8 +315,14 @@ int llwrite(int fd, char * buffer, int length){
 //a ser chamada no receptor
 int llread(int fd, char * buffer){	
 	//mais tarde completar com: store do numero de segmentos a ler (info recebida no 1º frame), etc
+  
+	//receber frame
+	//realizar destuffing
+  
+	//verificar se é trama set 
+	//se sim, enviar ua, esperar ate reeber trama I
 		
-	//receber frame 
+	//qd receber frame I
 	//ter em conta o L2 e L1
 	
       //cast das cenas para unsigned char
