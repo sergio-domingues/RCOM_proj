@@ -18,7 +18,7 @@ static int send_frame(int fd, frame send,int length);
 static int receive_frame(int fd, typeFrame* f);
 
 static void atende(int signal);
-static unsigned char calc_bcc(const char* buffer, int length);
+static unsigned char calc_bcc(char* buffer, int length);
 //================================
 //>>>>GLOBALS
 
@@ -213,7 +213,7 @@ int receive_frame(int fd, typeFrame* f){
 	return pos_ack; //campo de controlo da trama, retornado pela statemachine
 }
 
-unsigned char calc_bcc(const char* buffer, int length){	
+unsigned char calc_bcc( char* buffer, int length){	
 	unsigned char bcc = 0;	
 	int i;
 	for(i=0; i < length; i++){	//4:IGNORA PRIMEIROS 4 BYTES (FLAG/A/C/BCC)
@@ -236,6 +236,8 @@ int llwrite(int fd, char * buffer, int length){
 	frame[1] = A_EMI_REC;
 	frame[2] = N(num_sequencia);   //a verificar conforme o valor retornado na resposta (rr,rej..)
 	frame[3] = A_EMI_REC^frame[2];
+	
+	num_sequencia = 1 - num_sequencia;  //actualiza valor para o esperado na resposta
 	//============================		
 	/* 	incorpora dados na trama 	*/	
 	// I = [FH]	
@@ -278,7 +280,7 @@ int llwrite(int fd, char * buffer, int length){
 			else{
 				if(r_frame == RR){ //positive acknowledge				
 					
-					if( (ack >> 5) != num_sequencia){
+					if( (ack >> 5) == num_sequencia){
 						retries = -1; //termina ciclo exterior "sucesso"
 						break;
 					} else { 		//valor nao esperado
@@ -294,6 +296,9 @@ int llwrite(int fd, char * buffer, int length){
 					}
 					else {
 						retries++;
+						num_sequencia = 1-num_sequencia; //reset to previou value
+						frame[2] = N(num_sequencia);   
+						frame[3] = A_EMI_REC^frame[2];
 						break; //retransmit frame
 					}
 				}
@@ -312,12 +317,6 @@ int llwrite(int fd, char * buffer, int length){
 	if(retries == MAX_RETRIES)  //ATINGIU NUM MAXIMO DE RETRANSMISSOES
 		return -1;
 	
-	if(num_sequencia){//update num_se1
-	  num_sequencia=0;
-	}
-	  else{
-	    num_sequencia=1;
-	  }
 	return chs_w;
 }
 
@@ -326,66 +325,103 @@ int llread(int fd, char * buffer){
 	//mais tarde completar com: store do numero de segmentos a ler (info recebida no 1º frame), etc
   
 	typeFrame frame_received = I;
-	int ack;
+	int ack, ret;
+	char s;
 	
-	while(counter < 5){  //TODO REDEFINE HARDCODE VALUE
+	frame reusable;
+	reusable.flag = FLAG;
+	reusable.a = A_EMI_REC;
+	reusable.a = A_EMI_REC;
+	reusable.flag2 = FLAG;
 	
-		ack = receive_frame(fd,&r_frame);
-
-		//TODO CRIAR CICLO DE ESPERA INFINITA OU COM NUM MAX DE "ESPERAS"
-		if(ack < 0){
-			printf("llread:timeout reached.\n");
-		}
-
-		if(ack == C_SET ){
-			frame ua;			
-			ua.flag = FLAG;
-			ua.a = A_EMI_REC;
-			ua.c = C_UA;
-			ua.bcc = A_EMI_REC^C_UA;
-			ua.flag2 = FLAG;		
-			
-			if ( send_frame(fd,ua,sizeof(ua)) < 0){
-				printf("Erro na escrita da trama UA");		
-				return -1;
-			}	
-			else 
-				printf("UA frame sent.\n");					
-		}
-		else if(ack == C_I_1 || ack == C_I_0){  // FRAME I
-			break;  			
-		}		
-	}
+	while(1){
 	
-	if(counter == 5){ 
-		counter = 0;
-		printf("llread: didnt receive accpetable frame.\n");
-		return -1; //TODO VERIFICAR SE ESTA E A OP + CORRECTA
-	}
-	counter = 0;
-	
-	//realizar destuffing
-  
-	//verificar se é trama set 
-	//se sim, enviar ua, esperar ate reeber trama I
+		//VERIFICA O TIPO DE TRAMA RECEBIDA
+		while(counter < 5){  //TODO REDEFINE HARDCODE VALUE
 		
-	//qd receber frame I
-	//ter em conta o L2 e L1
+			ack = receive_frame(fd,&r_frame);
+
+			//TODO CRIAR CICLO DE ESPERA INFINITA OU COM NUM MAX DE "ESPERAS"
+			if(ack < 0){
+				printf("llread:timeout reached.\n");
+			}
+
+			/* RECEBE SET FRAME */
+			if(ack == C_SET ){
+				
+				reusable.c = C_UA;
+				reusable.bcc = A_EMI_REC^C_UA;
+				
+				if ( send_frame(fd,reusable,sizeof(reusable)) < 0){
+					printf("Erro na escrita da trama UA.\n");		
+					return -1;
+				}	
+				else 
+					printf("UA frame sent.\n");					
+			}
+			else if(ack == C_I_1 || ack == C_I_0){  // FRAME I
+				s = ack >> 5;
+				break;  			
+			}		
+		}
+		//nao recebeu frame
+		if(counter == 5){ 
+			counter = 0;
+			printf("llread: didnt receive accpetable frame.\n");
+			return -1; //TODO VERIFICAR SE ESTA E A OP + CORRECTA
+		}
+		counter = 0;
+		
+		if(s != num_sequencia){  //emissor nao recebeu PREVIOUS ACK 
+			reusable.c = C_RR & N(1-s);
+			reusable.bcc = A_EMI_REC^reusable.c;
+			
+			//reenvio do previous ack
+			if(send_frame(reusable,sizeof(reusable)) < 0){
+				printf("Erro na escrita da trama REJ/RR.\n");		
+				return -1; //TODO VER SE ESTE VALOR E INTERPRETADO CORRECTAMENT
+			}
+			continue;  //esperar por trama I			
+		}
+		
+		//===============================
+		/* TRATAMENTO DA TRAMA I  */
+		
+		ret = read_destuffing(fd,buffer,length);
+		if(ret < 0 ){
+			printf("llread:error on read_destuffing.\n");
+			//TODO AGIR DE ACORDO
+		}
+		
+		unsigned char bcc2;
+		bcc2 calc_bcc(buffer,ret-1); // -1: ignora bcc2
+		
+		//REJEITA FRAME <- ERRO NO BCC2
+		if(bcc2 != buffer[ret-1] ){
+			printf("llread: bcc is different.\n");
+			
+			reusable.c = C_REJ & N(s);
+			reusable.bcc = A_EMI_REC^reusable.c;
+		}
+		else{
+			//rej => RR  //reutilizacao da frame
+			num_sequencia = 1-num_sequencia;
+			
+			reusable.c = C_RR & N(s);
+			reusable.bcc = A_EMI_REC^reusable.c;	
+		}
+		
+		if(send_frame(reusable,sizeof(reusable)) < 0){
+			printf("Erro na escrita da trama REJ/RR.\n");		
+			return -1; //TODO VER SE ESTE VALOR E INTERPRETADO CORRECTAMENT
+		}
+		else{
+			break;
+		}
+	}
 	
-      //cast das cenas para unsigned char
-  
-	//remove FH E FT
-	
-	//verificacoes bbc2 
-	
-	//funcao receive_frame retorna campo de controlo C 
-	
-	//envio de resposta adequada
-	//construcao de RR ou REJ
-	//ter em conta o campo C da trama I para construir:
-	//campo de controlo C = N(s) & (0010...) conforme seja RR ou REJ
-	
-  return 0; //return array_length; //num caracteres lidos
+	printf("llread.\n");
+	return ret; //num caracteres lidos
 }
 
 //======================================

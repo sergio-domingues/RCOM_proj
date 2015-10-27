@@ -23,7 +23,7 @@
 #define C_SET 			0x07
 #define C_DISC			0x0B
 #define C_UA			0x03
-#define C_RR			0x21
+#define C_RR			0x01
 #define C_REJ			0x23
 #define C_I_1			0x20 //campo c das tramas I N(s)
 #define C_I_0			0x00

@@ -31,18 +31,48 @@ int write_stuffing(int fd, const unsigned char * buffer,int length){
 	return acc;
 }
 
-int read_destuffing(int fd, unsigned char * data_to_be_filled){
+int read_destuffing(int fd, unsigned char * data_to_be_filled, int length){
 	
-	char ch;
-	int i = 0, length = strlen((char *)data_to_be_filled);
+	char ch[2];	
+	int i = 0, res, flag_received = 0;
 	
-	while(i < length ){ //nao ultrapassar o tamanho esperado
+	while(i < length){ //nao ultrapassar o tamanho esperado
 		
-		read(fd,&ch,1);
+		res = read(fd,&ch,sizeof(ch));
 		
-		//realizar operacao de destuffing		
+		if(res <= 0){
+			return -1;  //nao encontrou flag e terminou
+		}
+		else if(res == 1){
+			if(ch[0] == FLAG){
+				return i;
+			}else
+				return -1;
+		}else { //res = 2
+			if(ch[0] == FLAG ){
+				return i;
+			}
+			else if(ch[1] == FLAG){
+				data_to_be_filled[i] = ch[0];
+				i++;
+				return i;
+			}			
+		}		
+				
+		if(ch[0] == ESCAPE && ch[1] == FLAG_STUFFING ){  //#DESTUFF 1
+			data_to_be_filled[i] = FLAG;
+			i++;
+		} else if (ch[0] == ESCAPE && ch[1] == ESCAPE_STUFFING){ //#DESTUFF 2
+			data_to_be_filled[i] = ESCAPE;	
+			i++;
+		}
+		else {
+			data_to_be_filled[i] = ch[0];
+			data_to_be_filled[i] = ch[1];
+			i+=res;
+		}
 	}
-
 	
-	return 0;
+	//nao encontrou flag
+	return -1;
 }

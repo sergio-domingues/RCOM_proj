@@ -110,7 +110,8 @@ int C_RCV(char c,typeFrame* f){
 }
 
 int BCC(char c,typeFrame* f){
-printf("BCC\n");	 
+	printf("BCC\n");
+	
     if (c == FLAG){
 	    receiveFrame.flag2 = FLAG;
 	    return receiveFrame.c;

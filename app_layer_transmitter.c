@@ -56,6 +56,8 @@ int main(int argc, char** argv){
 
 	//TODO alterar isto para valor argv correcto
 	
+	//TODO PASSAR NOME DO FICHEIRO POR ARG
+	
 	/* VERIFICACOES */
 	if(argv[1] < 0){
 		printf("Insert correct port value.\n");
@@ -173,8 +175,7 @@ int main(int argc, char** argv){
 	//VERIFICAR RETORNO DO LLWRITE
 	//SE RETORNO = POSITIVE ACK -> seq_actual++;
   }
-  
-   
+ 
  
   //ENVIA PACOTE DE CONTROLO (END)
   packet_start[0] = 2;  //2 - END
