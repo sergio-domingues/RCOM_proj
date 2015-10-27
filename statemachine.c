@@ -113,7 +113,7 @@ int BCC(char c,typeFrame* f){
 printf("BCC\n");	 
     if (c == FLAG){
 	    receiveFrame.flag2 = FLAG;
-	    return receiveFrame.c;
+	    return 0;
 	    //stateFunc = &stop;
 	}
     else 
