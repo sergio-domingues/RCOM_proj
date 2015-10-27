@@ -22,6 +22,7 @@ static unsigned char calc_bcc(const char* buffer, int length);
 //>>>>GLOBALS
 
 static struct termios oldtio; //boa pratica limited scope
+static struct sigaction sa;
 static int alarm_flag = 0, counter = 0;
 static int num_sequencia = 0;
 
@@ -78,6 +79,11 @@ int llopen(int porta,int tipo){
 	port_setting(fd); //configura port
 	
 	
+	 // Setup the sighub handler
+    sa.sa_handler = &handle_signal;	
+	sigaction(SIGALRM, &sa, NULL);
+	printf("setup SIGALARM handler.\n");	
+	
 	//CONNECTION================
 	//ENVIO DE TRAMAS SET E UA
 	if(tipo == TRANSMITTER){
@@ -91,7 +97,7 @@ int llopen(int porta,int tipo){
 }
 
 // atende alarme
-void atende(){              
+void atende(int signal){              
 	printf("alarme # %d\n", counter);
 	alarm_flag = 1;
 	counter++;
@@ -182,12 +188,11 @@ int send_frame(int fd, frame send,int length){
 
 
 int receive_frame(int fd, typeFrame* f){
-	
-	(void) signal(SIGALRM, atende); //instala handler para alarme
-		
+			
+	counter = 0;	
 	int pos_ack = 0, res;
 	char ch;	
-	
+		
 	alarm(ALARM_SPAN);  //activa alarme
 	
 	while(pos_ack == 0){
@@ -200,7 +205,7 @@ int receive_frame(int fd, typeFrame* f){
 			return -1;		
 	    }
 	}
-		
+	
 	return pos_ack; //campo de controlo da trama, retornado pela statemachine
 }
 
