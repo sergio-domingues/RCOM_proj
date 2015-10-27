@@ -17,9 +17,15 @@ int main(int argc, char** argv)
 	sscanf(argv[1],"/dev/ttyS%d",&port);
 
 	int fd = llopen(port,RECEIVER);
+	if(fd < 0){
+		printf("error on llopen.\n");
+		return -1;
+	}
 		
-	llclose(fd,RECEIVER);
-
+	if(llclose(fd,RECEIVER) < 0){
+		printf("error on llclose.\n");
+		return -1;
+	}
 	printf("acabou.\n");
 
 	return 0;

@@ -41,9 +41,17 @@ int main(int argc, char** argv)
 
 	int fd = llopen(port,TRANSMITTER);
 
+	if(fd < 0){
+		printf("error on llopen.\n");
+		return -1;
+	}
+	
 	//llwrite(fd,buffer,length);  
 	
-	llclose(fd,TRANSMITTER);
+	if(llclose(fd,TRANSMITTER) < 0){
+		printf("error on llclose.\n");
+		return -1;
+	}
 	printf("acabou.\n");
 	return 0;
     
