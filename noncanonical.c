@@ -18,6 +18,8 @@ int main(int argc, char** argv)
 
 	int fd= llopen(port,RECEIVER);
 	
+	printf("acabou");
+	
 	
 	llclose(fd,RECEIVER);
 
