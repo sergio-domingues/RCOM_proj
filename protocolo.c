@@ -73,7 +73,7 @@ int llopen(int porta,int tipo){
 	sprintf(device_path,"%s%d",DISPOSITIVO, porta);
 		
 	int fd = open(device_path, O_RDWR | O_NOCTTY ); //If set & path identifies a terminal device dn't cause terminal device to become the controlling terminal for the process.
-	if (fd <0) { perror(device_path); exit(-1); }
+	if (fd < 0) { perror(device_path); exit(-1); }
 		
 	printf("Inicia comunicao com dispostivo.\n");	
 	
@@ -325,7 +325,45 @@ int llwrite(int fd, char * buffer, int length){
 int llread(int fd, char * buffer){	
 	//mais tarde completar com: store do numero de segmentos a ler (info recebida no 1º frame), etc
   
-	//receber frame
+	typeFrame frame_received = I;
+	int ack;
+	
+	while(counter < 5){  //TODO REDEFINE HARDCODE VALUE
+	
+		ack = receive_frame(fd,&r_frame);
+
+		//TODO CRIAR CICLO DE ESPERA INFINITA OU COM NUM MAX DE "ESPERAS"
+		if(ack < 0){
+			printf("llread:timeout reached.\n");
+		}
+
+		if(ack == C_SET ){
+			frame ua;			
+			ua.flag = FLAG;
+			ua.a = A_EMI_REC;
+			ua.c = C_UA;
+			ua.bcc = A_EMI_REC^C_UA;
+			ua.flag2 = FLAG;		
+			
+			if ( send_frame(fd,ua,sizeof(ua)) < 0){
+				printf("Erro na escrita da trama UA");		
+				return -1;
+			}	
+			else 
+				printf("UA frame sent.\n");					
+		}
+		else if(ack == C_I_1 || ack == C_I_0){  // FRAME I
+			break;  			
+		}		
+	}
+	
+	if(counter == 5){ 
+		counter = 0;
+		printf("llread: didnt receive accpetable frame.\n");
+		return -1; //TODO VERIFICAR SE ESTA E A OP + CORRECTA
+	}
+	counter = 0;
+	
 	//realizar destuffing
   
 	//verificar se é trama set 
