@@ -97,11 +97,10 @@ int llopen(int porta,int tipo){
 }
 
 // atende alarme
-void atende(int signal){              
-	printf("alarme # %d\n", counter);
+void atende(int signal){   
 	alarm_flag = 1;
-	counter++;
-	signal(SIGALRM, atende); //reinstala handler
+	counter++;           
+	printf("alarme # %d\n", counter);	
 }
 
 
