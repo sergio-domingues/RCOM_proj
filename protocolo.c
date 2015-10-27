@@ -386,7 +386,7 @@ int disconnection_transmitter(int fd){
 		printf("Error transmission/reception DISC's.\n");
 		return -1;	
 	}
-	printf("DISConnected.\n");
+	printf("TRANSMITTER:DISC SENT.\n");
 		
 	frame ua;	
 	ua.flag = FLAG;
@@ -397,10 +397,10 @@ int disconnection_transmitter(int fd){
 	
 	//chama send(ua)
 	if ( send_frame(fd,ua,sizeof(ua)) < 0 ){
-		printf("Error sending UA");		
+		printf("Error sending UA.\n");		
 		return -1;
 	}	
-	printf("UA frame sent.\n");
+	printf("TRANSMITTER:UA frame sent.\n");
 	
 	return 0; 
 }
@@ -410,6 +410,8 @@ int disconnection_receiver(int fd){
 	typeFrame frame_received = DISC, frame_received_2 = UA;
 	//receive DISC
 	receive_frame(fd,&frame_received);
+	
+	printf("RECEIVER:Disc received.\n");
 	
 	frame disc;
 	
@@ -425,13 +427,13 @@ int disconnection_receiver(int fd){
 		printf("Error sending DISC.\n");
 		return -1;		
 	}	
-	printf("Send DISC.\n");
+	printf("RECEIVER:Send DISC.\n");
 		
 	if( receive_frame(fd,&frame_received_2) < 0 ) {
 		printf("Receiving UA timeout.\n");
 	}
 	
-	fprintf(stderror,"Receive UA.\n");
+	fprintf(stderror,"RECEIVER:Received UA.\n");
 	counter = 0;
 	
 	return 0;
