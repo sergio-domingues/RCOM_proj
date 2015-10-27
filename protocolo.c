@@ -121,7 +121,8 @@ int transmission_frame_SU(int fd, frame send,int length){
 		printf("(dis)connection not established.\n");
 		counter = 0;
 		return -1;
-	}	
+	}
+	counter = 0;
 	return 0; //success	
 }
 
@@ -420,11 +421,13 @@ int disconnection_receiver(int fd){
 		printf("Error sending DISC.\n");
 		return -1;		
 	}	
+	printf("Send DISC.\n");
 		
 	if( receive_frame(fd,&frame_received_2) < 0 ) {
 		printf("Receiving UA timeout.\n");
 	}
-		
+	
+	fprintf(stderror,"Receive UA.\n");
 	counter = 0;
 	
 	return 0;
