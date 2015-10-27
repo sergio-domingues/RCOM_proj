@@ -43,7 +43,7 @@ int main(int argc, char** argv)
 
 	//llwrite(fd,buffer,length);  
 	printf("acabou");
-	llclose(fd,TRANSMITTER);
+	//llclose(fd,TRANSMITTER);
 
 	return 0;
     
