@@ -1,4 +1,6 @@
 #include "macros.h"
+#include "statemachine.h"
+#include "stuffing.h"
 
 #define FRAME_HEADER_SIZE 4  //BYTES
 #define PACKET_HEADER_SIZE 
@@ -11,11 +13,11 @@ static int disconnection_receiver(int fd);
 
 static int port_setting(int fd);
 
-static int transmission_frame_SU(int fd, frame send);	//loop send/receive till correct answer
-static int send_frame(int fd, frame send);
+static int transmission_frame_SU(int fd, frame send,int length);	//loop send/receive till correct answer
+static int send_frame(int fd, frame send,int length);
 static int receive_frame(int fd, typeFrame* f);
 
-static unsigned char calc_bcc(const char* buffer, int length)
+static unsigned char calc_bcc(const char* buffer, int length);
 //================================
 //>>>>GLOBALS
 
@@ -101,7 +103,7 @@ int connection_transmitter(int fd){
 	set.flag2=FLAG;	
 	
 	//loop till send/receive succesfully
-	transmission_frame_SU(fd,set);
+	transmission_frame_SU(fd,set,sizeof(set));
 
 	return fd;
 }
@@ -113,14 +115,14 @@ void atende(){
 	counter++;
 }
 
-int transmission_frame_SU(int fd, frame send){
+int transmission_frame_SU(int fd, frame send,int length){
 	
 	typeFrame frame_received = DISC;
 	
 	//loop enqt (emissor not connected receiver) até max_retries	
 	while(counter < MAX_RETRIES) {
 				
-		if( send_frame(fd,send) < 0 ){
+		if( send_frame(fd,send,length) < 0 ){
 			printf("Error sending SET frame.\n");
 			exit(1);
 		}
@@ -140,10 +142,10 @@ int transmission_frame_SU(int fd, frame send){
 }
 
 
-int send_frame(int fd, frame send){
+int send_frame(int fd, frame send,int length){
 	
 	printf("Envio da trama");	
-	return write(fd,&send,sizeof(send));	
+	return write(fd,&send,length);	
 }
 
 
@@ -189,7 +191,7 @@ int connection_receiver(int fd){
 	ua.bcc = A_EMI_REC^C_UA;
 	ua.flag2 = FLAG;		
 	
-	if ( send_frame(fd,ua) < 0){
+	if ( send_frame(fd,ua,sizeof(ua)) < 0){
 		printf("Erro na escrita da trama UA");		
 		return -1;
 	}	
@@ -209,7 +211,7 @@ unsigned char calc_bcc(const char* buffer, int length){
 }
 
 //a ser chamada no emissor
-int llwrite(int fd, const char * buffer, int length){	
+int llwrite(int fd, char * buffer, int length){	
 	//RECEIVES I = [PH|DATA]
 	
 	int ack, retries = 0;
@@ -235,11 +237,12 @@ int llwrite(int fd, const char * buffer, int length){
 	frame[sizeof(frame)-1] = FLAG;
 	//I = [FH|PH|DATA|FT]
 	//============================
+	int chs_w;
 	
 	while( (retries < MAX_RETRIES) && retries > 0){	
 		/*		 STUFFING 		*/		
 		
-		int chs_w = write_stuffing(fd,frame, sizeof(frame));
+		chs_w = write_stuffing(fd,frame, sizeof(frame));
 		if (chs_w < 0){
 			printf("error writting stuffed frame\n");
 			return -1;
@@ -297,7 +300,12 @@ int llwrite(int fd, const char * buffer, int length){
 	if(retries == MAX_RETRIES)  //ATINGIU NUM MAXIMO DE RETRANSMISSOES
 		return -1;
 	
-	num_sequencia ? 0 : 1;  //update num_seq 
+	if(num_sequencia){//update num_se1
+	  num_sequencia=0;
+	}
+	  else{
+	    num_sequencia=1;
+	  }
 	return chs_w;
 }
 
@@ -308,6 +316,8 @@ int llread(int fd, char * buffer){
 	//receber frame 
 	//ter em conta o L2 e L1
 	
+      //cast das cenas para unsigned char
+  
 	//remove FH E FT
 	
 	//verificacoes bbc2 
@@ -359,7 +369,7 @@ int disconnection_transmitter(int fd){
 	disc.flag2 = FLAG;	
 	
 	//loop send/receive DISC
-	if ( transmission_frame_SU(fd,disc) != 0 ) {
+	if ( transmission_frame_SU(fd,disc,sizeof(disc)) != 0 ) {
 		printf("Error transmission/reception DISC's.\n");
 		return -1;	
 	}
@@ -373,7 +383,7 @@ int disconnection_transmitter(int fd){
 	ua.flag2 = FLAG;		
 	
 	//chama send(ua)
-	if ( send_frame(fd,ua) < 0 ){
+	if ( send_frame(fd,ua,sizeof(ua)) < 0 ){
 		printf("Error sending UA");		
 		return -1;
 	}	
@@ -398,7 +408,7 @@ int disconnection_receiver(int fd){
 
 	//TODO USAR RETRANSMISSIONS EM CASO DE TIMEOUT
 	
-	if( send_frame(fd,disc) < 0 ){	//send DISC
+	if( send_frame(fd,disc,sizeof(disc)) < 0 ){	//send DISC
 		printf("Error sending DISC.\n");
 		return -1;		
 	}	

@@ -7,17 +7,43 @@
 #define NUM_ARGS 3
 
 typedef struct ctrl_packet {
- unsigned char control_field = I_CONTROL_START;  //START POR DEFEITO
+ unsigned char control_field;  //START POR DEFEITO
  
- unsigned char type_filename = CTRL_ARG_FILE_NAME; //nome do ficheiro
- unsigned char length_filename = sizeof(FILENAME);
- unsigned char value_filename[] = FILENAME;
+ unsigned char type_filename; //nome do ficheiro
+ unsigned char length_filename;
+ char * value_filename;
  
- unsigned char type_file_length = CTRL_ARG_FILE_LENGTH; 	//tamanho do ficheiro
+ unsigned char type_file_length; 	//tamanho do ficheiro
  unsigned char length_file_length;
  unsigned char* value_file_length;
  
 } control_packet;
+
+
+void fillControlPacket(control_packet * packet){
+    packet->control_field = I_CONTROL_START;  //START POR DEFEITO
+ 
+    packet->type_filename = CTRL_ARG_FILE_NAME; //nome do ficheiro
+    packet->length_filename = strlen(FILENAME);
+    packet->value_filename = FILENAME;
+ 
+    packet->type_file_length = CTRL_ARG_FILE_LENGTH; 	//tamanho do ficheiro
+}
+
+int changeToArray(control_packet packet, char* array){
+     
+     array[0]= packet.control_field;
+     array[1] = packet.type_filename;
+     array[2] = packet.length_filename;
+     memcpy(&array[3], packet.value_filename, (int)packet.length_filename);
+     
+     array[3 + strlen(packet.value_filename)] = packet.type_file_length;
+     array[4 + strlen(packet.value_filename)] = packet.length_file_length;
+     memcpy(&array[5 + strlen(packet.value_filename)], packet.value_file_length,(int)  packet.length_file_length);
+     
+     return (5+ strlen(packet.value_filename) +  (int)packet.length_filename);
+    
+}
 
 //============================
 
@@ -38,7 +64,7 @@ int main(int argc, char** argv){
 	int port_fd = atoi(argv[1]);	
 	
 	if( atoi(argv[2]) < BAUDRATE_MIN || atoi(argv[2]) > BAUDRATE_MAX){
-		printf("Baudrate accepted values: [%s,%s].\n",BAUDRATE_MIN,BAUDRATE_MAX);
+		printf("Baudrate accepted values: [%d,%d].\n",BAUDRATE_MIN,BAUDRATE_MAX);
 		return -1;
 	}	
 	baudrate = atoi(argv[2]);
@@ -66,7 +92,7 @@ int main(int argc, char** argv){
 
   //FILE'S INFO STRUCT
   struct stat fileStat;
-  if(fstat(file,&fileStat) < 0){
+  if(fstat(file_fd,&fileStat) < 0){
 	  printf("Erro a obter struct filestat.\n");
 	  return -1;	  
   }    
@@ -83,13 +109,16 @@ int main(int argc, char** argv){
   int seq_actual = 0;
 	
   /* PACOTE DE CONTROLO (START) */
-  control_packet c_packet_start;  			 //c-control d-data
+  control_packet c_packet_start;  //c-control d-data
+  fillControlPacket(&c_packet_start);
+  
   c_packet_start.length_file_length = sizeof(file_size);
   
   //converter inteiro em array de bytes
   unsigned char v[sizeof(file_size)]; 
-  for(int i = 0; i < sizeof(file_size); i++){		
-		v[i] = (x >> 8*i) & 0x00FF;
+  int i;
+  for(i = 0; i < sizeof(file_size); i++){		
+		v[i] = (file_size >> 8*i) & 0x00FF;
   }
   
   //em cada posicao do array esta um byte do tamanho shiftado
@@ -97,13 +126,18 @@ int main(int argc, char** argv){
   
   /* 		SENDING DATA CONTROL FRAME	     	*/
   //TODO: VERIFICAR RETORNO DO LLWRITE
-  llwrite(port_fd, &c_packet_start, sizeof(c_packet_start));  //envio de packet start
+  char packet_start[40];
+  
+  int size=changeToArray(c_packet_start,packet_start);
+  
+  
+  llwrite(port_fd, packet_start, size);  //envio de packet start
   printf("packet start send\n");
   
   
   /* ENVIO DE SEGMENTOS DO FICHEIRO */  
   
-  unsigned char data_packet[P_HEADER_SIZE + max_data_field], 
+  char data_packet[P_HEADER_SIZE + max_data_field], 
 				buffer[max_data_field];
 				
   int chs_read, stop = 0;
@@ -117,8 +151,8 @@ int main(int argc, char** argv){
 	if(chs_read < 0){
 		printf("Erro a ler ficheiro.\n");
 		//TODO AGIR DE ACORDO
-	}else if(chs_read < max_data_field){ //terminou ficheiro
-		stop == 1;	//TERMINAR CICLO //TODO VERIFICAR ISTO	
+	}else if(chs_read < max_data_field){ //terminou ficheiro  Divisao do ficheiro em segmentos
+		stop = 1;	//TERMINAR CICLO //TODO VERIFICAR ISTO	
 	}	
 		
 	/* 	DATA PACKET HEADER 	*/
@@ -143,8 +177,9 @@ int main(int argc, char** argv){
    
  
   //ENVIA PACOTE DE CONTROLO (END)
-  c_packet_start.control_field = 2;  //2 - END
-  write(port_fd,&c_packet_start,sizeof(c_packet_start));  //envio de packet END
+  packet_start[0] = 2;  //2 - END
+  size=changeToArray(c_packet_start,packet_start);
+  write(port_fd,packet_start,sizeof(packet_start));  //envio de packet END
   //=====================================
   
   llclose(port_fd, TRANSMITTER);

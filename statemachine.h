@@ -8,6 +8,6 @@ int C_RCV(char c,typeFrame* f);
 int BCC(char c,typeFrame* f);
 int stop(char c,typeFrame* f);
 
-int (*stateFunc)(char c,typeFrame* f) = &start;
+int (*stateFunc)(char c,typeFrame* f);
 
 #endif

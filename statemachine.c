@@ -5,11 +5,14 @@ static frame receiveFrame;
 
 /*Uso de parametro typeFrame*f necessario para 
 statemachine tolerar casos de tramas I*/
+
+extern int (*stateFunc)(char c,typeFrame* f)=&start;
+
 int start(char c,typeFrame* f){
 	printf("start\n");   		
 	
 	if(c == FLAG){
-		stateFunc = &flag_RCV;
+		stateFunc = flag_RCV;
 		receiveFrame.flag = c;
 	}
 	return 0;
@@ -92,7 +95,7 @@ int C_RCV(char c,typeFrame* f){
 		stateFunc = &BCC;
 		receiveFrame.bcc = c;
 		
-		if(f == I){
+		if(*f == I){
 			stateFunc = &start;
 			//nao ha mais nada a receber (trama I)
 			return c; //retorna valor campo controlo

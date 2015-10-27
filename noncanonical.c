@@ -1,5 +1,6 @@
 /*Non-Canonical Input Processing*/
 #include "macros.h"
+#include "protocolo.h"
 
 
 
@@ -17,9 +18,9 @@ int main(int argc, char** argv)
 
 	int fd= llopen(port,RECEIVER);
 	
-	//llread(fd,buffer);
+	
+	llclose(fd,RECEIVER);
 
-	//llclose(fd,...);
 
 	return 0;
 }
