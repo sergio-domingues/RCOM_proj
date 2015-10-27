@@ -107,19 +107,20 @@ void atende(int signal){
 int transmission_frame_SU(int fd, frame send,int length){
 	
 	typeFrame frame_received = DISC;
+	counter = 0;
 	
 	//loop enqt (emissor not connected receiver) até max_retries	
 	while(counter < MAX_RETRIES) {
 				
 		if( send_frame(fd,send,length) < 0 ){
-			printf("Error sending SET frame.\n");
-			exit(1);
+			printf("Error sending frame.\n");
+			return -1;
 		}
 		
-		if ( receive_frame(fd, &frame_received) != 0 ) { //recebe UA frame com sucesso
+		if ( receive_frame(fd, &frame_received) >= 0 ) { //recebe UA frame com sucesso
 			printf("TRANSMITTER-RECEIVER (dis)connection established.\n");
 			break;
-		}		
+		}
 	}
 	
 	if(counter == MAX_RETRIES){ //nao conseguiu estabelecer conexao
@@ -127,6 +128,7 @@ int transmission_frame_SU(int fd, frame send,int length){
 		counter = 0;
 		return -1;
 	}
+	
 	counter = 0;
 	return 0; //success	
 }
@@ -143,7 +145,10 @@ int connection_transmitter(int fd){
 	set.flag2=FLAG;	
 	
 	//loop till send/receive succesfully
-	transmission_frame_SU(fd,set,sizeof(set));
+	if (transmission_frame_SU(fd,set,sizeof(set)) < 0){
+		printf("Connection_transmitter: error transmission frame.\n");
+		return -1;
+	}
 
 	return fd;
 }
@@ -155,7 +160,10 @@ int connection_receiver(int fd){
 	//espera por uma trama SET correcta
 	typeFrame frame_received = SET;
 	
-	receive_frame(fd,&frame_received);
+	if(receive_frame(fd,&frame_received)  < 0){
+		printf("connection_receiver:TIMEOUT on receive frame.\n");
+		return -2;		
+	}
 
 	if(frame_received != SET) //TODO USAR VALOR RETORNADO
 	  return -2;
@@ -173,7 +181,8 @@ int connection_receiver(int fd){
 		printf("Erro na escrita da trama UA");		
 		return -1;
 	}	
-	printf("UA frame sent.\n");
+	else 
+		printf("UA frame sent.\n");
 	
 	return fd;
 }
@@ -184,9 +193,7 @@ int send_frame(int fd, frame send,int length){
 }
 
 
-int receive_frame(int fd, typeFrame* f){
-			
-	counter = 0;	
+int receive_frame(int fd, typeFrame* f){	
 	int pos_ack = 0, res;
 	char ch;	
 		
@@ -380,11 +387,12 @@ int disconnection_transmitter(int fd){
 	disc.flag2 = FLAG;	
 	
 	//loop send/receive DISC
-	if ( transmission_frame_SU(fd,disc,sizeof(disc)) != 0 ) {
+	if ( transmission_frame_SU(fd,disc,sizeof(disc)) < 0 ) {
 		printf("Error transmission/reception DISC's.\n");
 		return -1;	
 	}
-	printf("TRANSMITTER:DISC SENT.\n");
+	else
+		printf("TRANSMITTER:DISC SENT.\n");
 		
 	frame ua;	
 	ua.flag = FLAG;
@@ -397,8 +405,9 @@ int disconnection_transmitter(int fd){
 	if ( send_frame(fd,ua,sizeof(ua)) < 0 ){
 		printf("Error sending UA.\n");		
 		return -1;
-	}	
-	printf("TRANSMITTER:UA frame sent.\n");
+	}
+	else	
+		printf("TRANSMITTER:UA frame sent.\n");
 	
 	return 0; 
 }
@@ -407,9 +416,11 @@ int disconnection_receiver(int fd){
 	
 	typeFrame frame_received = DISC, frame_received_2 = UA;
 	//receive DISC
-	receive_frame(fd,&frame_received);
-	
-	printf("RECEIVER:Disc received.\n");
+	if( receive_frame(fd,&frame_received) < 0 ) {
+		printf("Receiving DISC timeout.\n");
+	}
+	else
+		printf("RECEIVER:Disc received.\n");
 	
 	frame disc;
 	
@@ -429,10 +440,11 @@ int disconnection_receiver(int fd){
 		
 	if( receive_frame(fd,&frame_received_2) < 0 ) {
 		printf("Receiving UA timeout.\n");
+		counter = 0;
+		return -1;
 	}
-	
-	fprintf(stderr,"RECEIVER:Received UA.ret:%d\n");
-	counter = 0;
+	else	
+		fprintf(stderr,"RECEIVER:Received UA.\n");
 	
 	return 0;
 }
