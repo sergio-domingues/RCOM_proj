@@ -4,10 +4,10 @@ FILES = protocolo.c stuffing.c statemachine.c
 OUT_EXE = app
 
 transmitter:
-	$(CC) $(FLAGS) -o $(OUT_EXE) app_layer_transmitter.c $(FILES)
+	$(CC) -o $(OUT_EXE) app_layer_transmitter.c $(FILES) $(FLAGS)
 
 receiver:
-	$(CC) $(FLAGS) -o $(OUT_EXE) app_layer_receiver.c $(FILES)
+	$(CC) -o $(OUT_EXE) app_layer_receiver.c $(FILES)  $(FLAGS)
 
 clean:
 	rm -f *.o
