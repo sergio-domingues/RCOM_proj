@@ -194,13 +194,13 @@ int send_frame(int fd, frame send,int length){
 
 
 int receive_frame(int fd, typeFrame* f){	
-	int pos_ack = 0, res;
+	int pos_ack = 0;
 	char ch;	
 		
 	alarm(ALARM_SPAN);  //activa alarme
 	
 	while(pos_ack == 0){
-	    res = read(fd,&ch,1);
+	    read(fd,&ch,1); //TODO: VERIFICAR RETORNO ??
 	    printf("char recebido: 0x%X \n",ch);
 	    pos_ack = stateFunc(ch,f);
 	    

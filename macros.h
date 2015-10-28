@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <math.h>
 
 
 #define N(s) (0000000 | (s << 5))

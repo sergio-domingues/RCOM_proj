@@ -9,7 +9,7 @@ typedef struct{
 } control_packet;
 
 static control_packet c_packets[2];
-static int file_desctiptor, num_sequencia = 0;
+static int file_descriptor, num_sequencia = 0;
 
 int ctrl_packet_handler(char * buffer, int packet){	
 	printf("control packet:%s.\n",buffer);
@@ -22,24 +22,24 @@ int ctrl_packet_handler(char * buffer, int packet){
 			indice++; 
 			acc = buffer[indice]; //parameter Length
 			
-			memcpy(c_packets[packet], &buffer[indice], acc); //copia nome para struct	
+			memcpy(&c_packets[packet], &buffer[indice], acc); //copia nome para struct	
 		}
 		else if(buffer[indice] == CTRL_ARG_FILE_NAME){ //parameter type
 			indice++; 
 			acc = buffer[indice]; //parameter Length
 			
-			int file_size = 0;
-			for(int j = 0; j < acc; j++){ 
+			int file_size = 0, j;
+			for( j = 0; j < acc; j++){ 
 				file_size += (unsigned char)buffer[indice+j] * pow(256,j);
 			}
-			c_packets[packet] = file_size;
+			c_packets[packet].file_length = file_size;
 		}
 		else {
 			printf("Control packet is corrupted.\n");
 			return -1;
 		}
 		
-		indice += ack;  //indice actual do buffer
+		indice += acc;  //indice actual do buffer
 	}
 	
 	return 0;
@@ -80,7 +80,7 @@ int main(int argc, char** argv){
 	int port = atoi(argv[1]);	
 	
 	if( atoi(argv[2]) < BAUDRATE_MIN || atoi(argv[2]) > BAUDRATE_MAX){
-		printf("Baudrate accepted values: [%s,%s].\n",BAUDRATE_MIN,BAUDRATE_MAX);
+		printf("Baudrate accepted values: [%d,%d].\n",BAUDRATE_MIN,BAUDRATE_MAX);
 		return -1;
 	}	
 	
@@ -95,12 +95,12 @@ int main(int argc, char** argv){
 	}
 	//=========================
 	
-	int file_size = 0, stop = 0;
+	int stop = 0;
 	char buffer[MAX_BUFFER_SIZE];
 	
 	while(stop == 0){
 		int res;
-		res = llread(port_fd,buffer));
+		res = llread(port_fd,buffer);
 		
 		if(res < 0){
 			printf("Error in llread.\n");
@@ -119,8 +119,8 @@ int main(int argc, char** argv){
 				ret = ctrl_packet_handler(&buffer[1],0);
 				
 				/* OPEN FILE */
-				file_desctiptor = open(c_packets[0].file_name, O_CREAT|O_WRONLY, 0666);
-				if(file_desctiptor < 0){
+				file_descriptor = open(c_packets[0].file_name, O_CREAT|O_WRONLY, 0666);
+				if(file_descriptor < 0){
 					printf("Error opening file.\n");
 					return -1;
 				}				
