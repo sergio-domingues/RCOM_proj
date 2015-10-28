@@ -45,7 +45,6 @@ int ctrl_packet_handler(char * buffer, int packet){
 	return 0;
 }
 
-
 int data_packet_handler(char* buffer){
 	
 	if(buffer[0] - num_sequencia > 1 ){  //verifica valida do num sequencia
@@ -123,7 +122,8 @@ int main(int argc, char** argv){
 				if(file_descriptor < 0){
 					printf("Error opening file.\n");
 					return -1;
-				}				
+				}
+				printf("RECEIVER-File:%s opened.\n",c_packets[0].file_name);
 			break;
 				
 			case 2:	//end	

@@ -423,7 +423,7 @@ int llread(int fd, char * buffer){
 		
 		if(send_frame(fd,reusable,sizeof(reusable)) < 0){
 			printf("Erro na escrita da trama REJ/RR.\n");		
-			return -1; //TODO VER SE ESTE VALOR E INTERPRETADO CORRECTAMENT
+			return -1;
 		}
 		else{
 			break;
