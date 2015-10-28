@@ -1,61 +1,165 @@
 #include "macros.h"
 #include "protocolo.h"
 
-#define FILENAME "pinguim.gif"
-/*TODO ALTERAR ISTO PARA VALOR CORRECTO*/
-#define FILE_LENGTH "11000"  
 #define NUM_ARGS 2 
+
+typedef struct{	
+	int file_length;
+	char file_name[30];	
+} control_packet;
+
+static control_packet c_packets[2];
+static int file_desctiptor, num_sequencia = 0;
+
+int ctrl_packet_handler(char * buffer, int packet){	
+	printf("control packet:%s.\n",buffer);
+	
+	int i,indice=0,acc;
+	
+	for(i=0; i < 2; i++){  //2 - expect 2 args
+	
+		if(buffer[indice] == CTRL_ARG_FILE_LENGTH){ //parameter type
+			indice++; 
+			acc = buffer[indice]; //parameter Length
+			
+			memcpy(c_packets[packet], &buffer[indice], acc); //copia nome para struct	
+		}
+		else if(buffer[indice] == CTRL_ARG_FILE_NAME){ //parameter type
+			indice++; 
+			acc = buffer[indice]; //parameter Length
+			
+			int file_size = 0;
+			for(int j = 0; j < acc; j++){ 
+				file_size += (unsigned char)buffer[indice+j] * pow(256,j);
+			}
+			c_packets[packet] = file_size;
+		}
+		else {
+			printf("Control packet is corrupted.\n");
+			return -1;
+		}
+		
+		indice += ack;  //indice actual do buffer
+	}
+	
+	return 0;
+}
+
+
+int data_packet_handler(char* buffer){
+	
+	if(buffer[0] - num_sequencia > 1 ){  //verifica valida do num sequencia
+		printf("Expected frame sequence #%d but it was #%d.\n",num_sequencia+1,(unsigned char)buffer[0]);
+		return -1;
+	}
+	
+	int segment_size = (unsigned char)buffer[1]*256 + (unsigned char)buffer[2];
+	
+	/* WRITE FRAGMENT TO FILE DESTINATION */
+	if (write(file_desctiptor, buffer+3 , segment_size) < 0){
+		printf("Error writting file_segment.\n");
+		return -1;
+	}
+	
+	return 0;
+}
 
 int main(int argc, char** argv){
   
-  if(argc < NUM_ARGS + 1){
-		printf("Usage: transmitter [PORT] [BAUDRATE].\n");
+	if(argc < NUM_ARGS + 1){
+		printf("Usage: app [PORT] [BAUDRATE].\n");
 		return -1;
 	}
-
-	//TODO alterar isto para valor argv correcto
 	
 	/* VERIFICACOES */
-	if(argv[1] < 0){
+	
+	if( atoi(argv[1]) < 0){
 		printf("Insert correct port value.\n");
 		return -1;
 	}	
-	int port_fd = argv[1];	
+	int port = atoi(argv[1]);	
 	
-	if(argv[2] < BAUDRATE_MIN || argv[2] > BAUDRATE_MAX){
+	if( atoi(argv[2]) < BAUDRATE_MIN || atoi(argv[2]) > BAUDRATE_MAX){
 		printf("Baudrate accepted values: [%s,%s].\n",BAUDRATE_MIN,BAUDRATE_MAX);
 		return -1;
 	}	
-	baudrate = argv[2];
-  
-  int port_fd = argv[1];
-  //=========================
-  
-  llopen(port_fd,RECEIVER);
+	
+	baudrate = atoi(argv[2]);	
+	//=========================
+    /* OPEN PORT AND CONNECTS */
+	
+	int port_fd;
+    if ( (port_fd = llopen(port, RECEIVER)) < 0) { 
+		printf("Error on llopen.\n");
+		return -1;
+	}
+	//=========================
+	
+	int file_size = 0, stop = 0;
+	char buffer[MAX_BUFFER_SIZE];
+	
+	while(stop == 0){
+		int res;
+		res = llread(port_fd,buffer));
+		
+		if(res < 0){
+			printf("Error in llread.\n");
+			return -1;
+		}
+		
+		int ret;
+		
+		switch (buffer[i]){
+			
+			case 0: //dados
+				ret = data_packet_handler(&buffer[1]);					
+			break;
+			
+			case 1: //start
+				ret = ctrl_packet_handler(&buffer[1],0);
+				
+				/* OPEN FILE */
+				file_desctiptor = open(c_packets[0].file_name, O_CREAT|O_WRONLY, 0666);
+				if(file_desctiptor < 0){
+					printf("Error opening file.\n");
+					return -1;
+				}				
+			break;
+				
+			case 2:	//end	
+				ret = ctrl_packet_handler(&buffer[1],1);
 
-	//LOOP
-  //llread(...)  
+				if(close(file_descriptor) < 0){
+					printf("Erro closing file.\n");
+					return -1;
+				}
+				
+				stop = 1;  //end while
+			break;
+			
+			default:
+				printf("Information is corrupted.\n");
+				return -1;
+			break;
+		}
+		
+		if(ret < 0){
+			printf("Error handling frame.\n");
+			return -1;
+		}
+				
+		num_sequencia++;
+	}
+	
+	//TODO: VERIFICACOES
+	
+	//NO FINAL REPORTAR
+
   
-   //para obter tamanho do ficheiro
-  int file_size = 0;
-  //recebe na primeira
-  //TODO:ARG_SIZE(NUMERO DE BYTES QUE O TAMANHO DO FICHEIRO OCUPA) lido do pacote de controlo
-  for(int i = 0 ; i < arg_size; i++){ 
-	file_size += v[i]*pow(256,i);
-  }
-  //TODO FAZER ABORDAGEM SEMELHANTE PARA L2 E L1 DAS TRAMAS I
+	if(llclose(port_fd, TRANSMITTER) < 0){
+		printf("Erro on llclose.\n");
+		return -1;
+	}
   
-  //verifica que tipo de trama I se trata: I_DATA OU I_CONTROL_START OU I_CONTROL_END
-  //SE FOR PACOTE DE CONTROLO CHAMAR CONTROL PACKET HEADER
-  
-  //TODO: VERIFICACOES
-  //SE NUM_SEQ ACTUAL - NUM_SEQ_ANTERIOR > 1 -> SALTOU 1 FRAGMENTO
-  //NO FINAL REPORTAR
-  //ETC..
-  
- 
-  
-  llclose(port_fd, TRANSMITTER);
-  
- return 0; 
+	return 0; 
 }

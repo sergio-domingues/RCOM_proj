@@ -36,7 +36,7 @@ int read_destuffing(int fd, unsigned char * data_to_be_filled, int length){
 	char ch[2];	
 	int i = 0, res, flag_received = 0;
 	
-	while(i < length){ //nao ultrapassar o tamanho esperado
+	while(1){ //nao ultrapassar o tamanho esperado
 		
 		res = read(fd,&ch,sizeof(ch));
 		

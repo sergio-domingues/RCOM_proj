@@ -4,9 +4,9 @@
 #define FILENAME "pinguim.gif"
 #define P_HEADER_SIZE 	4 			/* BYTES */
 #define FILE_SECTION_MAX_SIZE 5000  /* BYTES */
-#define NUM_ARGS 3
+#define NUM_ARGS 4
 
-typedef struct ctrl_packet {
+typedef struct {
  unsigned char control_field;  //START POR DEFEITO
  
  unsigned char type_filename; //nome do ficheiro
@@ -24,8 +24,6 @@ void fillControlPacket(control_packet * packet){
     packet->control_field = I_CONTROL_START;  //START POR DEFEITO
  
     packet->type_filename = CTRL_ARG_FILE_NAME; //nome do ficheiro
-    packet->length_filename = strlen(FILENAME);
-    packet->value_filename = FILENAME;
  
     packet->type_file_length = CTRL_ARG_FILE_LENGTH; 	//tamanho do ficheiro
 }
@@ -50,7 +48,7 @@ int changeToArray(control_packet packet, char* array){
 int main(int argc, char** argv){
   
 	if(argc < NUM_ARGS + 1){
-		printf("Usage: transmitter [PORT] [BAUDRATE] [FRAGMENT_SIZE BYTES].\n");
+		printf("Usage: app [PORT] [BAUDRATE] [FRAGMENT_SIZE BYTES] [FILENAME].\n");
 		return -1;
 	}
 
@@ -63,7 +61,7 @@ int main(int argc, char** argv){
 		printf("Insert correct port value.\n");
 		return -1;
 	}	
-	int port_fd = atoi(argv[1]);	
+	int port = atoi(argv[1]);	
 	
 	if( atoi(argv[2]) < BAUDRATE_MIN || atoi(argv[2]) > BAUDRATE_MAX){
 		printf("Baudrate accepted values: [%d,%d].\n",BAUDRATE_MIN,BAUDRATE_MAX);
@@ -71,24 +69,26 @@ int main(int argc, char** argv){
 	}	
 	baudrate = atoi(argv[2]);
 
-	if(atoi(argv[3]) < 0){
-		printf("Introduce a correct value for data's frames max size./n");
+	if( atoi(argv[3]) < 0 || atoi(argv[3]) > MAX_BUFFER_SIZE ){
+		printf("data's frames size ]0,%d]./n",MAX_BUFFER_SIZE);
 		return -1;
 	}	
 	int max_data_field = atoi(argv[3]); 
   //===================
   
-  /* OPEN PORT */
+  /* OPEN PORT AND CONNECTS */
   
-  //TODO VERIFICAR RETORNO
-  llopen(port_fd,TRANSMITTER);  //se modificar 1º param, modificar tb llclose
+  int fd;
   
-  //============================
+  if ( (fd = llopen(port,TRANSMITTER)) < 0) { //se modificar 1º param, modificar tb llclose
+	printf("Error on llopen.\n");
+	return -1;
+  }
   
   /* OPEN FILE */
   int file_fd;
-  if((file_fd = open(FILENAME,O_RDONLY)) < -1){
-	  printf("Erro a abrir ficheiro %s.\n",FILENAME);
+  if((file_fd = open(argv[NUM_ARGS],O_RDONLY)) < -1){
+	  printf("Erro a abrir ficheiro %s.\n", argv[NUM_ARGS]);
 	  return -1;
   }
 
@@ -100,11 +100,7 @@ int main(int argc, char** argv){
   }    
   
   int file_size = fileStat.st_size; //TAMANHO DO FICHEIRO
-  
-  if(max_data_field > file_size){ 
-	  printf("File section size input value is greater than file size, default value set.\n");
-	  max_data_field = FILE_SECTION_MAX_SIZE;	  
-  }
+
   //====================================== 
   /* 	 	DATA TRANSMISSION 			*/
   
@@ -113,6 +109,9 @@ int main(int argc, char** argv){
   /* PACOTE DE CONTROLO (START) */
   control_packet c_packet_start;  //c-control d-data
   fillControlPacket(&c_packet_start);
+  
+  c_packet_start->length_filename = strlen(argv[NUM_ARGS]) + 1;  //FILENAME SIZE
+  c_packet_start->value_filename = argv[NUM_ARGS];   //FILENAME 
   
   c_packet_start.length_file_length = sizeof(file_size);
   
@@ -133,16 +132,18 @@ int main(int argc, char** argv){
   int size=changeToArray(c_packet_start,packet_start);
   
   
-  llwrite(port_fd, packet_start, size);  //envio de packet start
-  printf("packet start send\n");
-  
+  if(llwrite(fd, packet_start, size)< 0) ;  //envio de packet start
+	  printf("llwrite:packet start error.\n");
+	  return -1;
+  }
+  printf("packet start sent\n");  
   
   /* ENVIO DE SEGMENTOS DO FICHEIRO */  
   
   char data_packet[P_HEADER_SIZE + max_data_field], 
 				buffer[max_data_field];
 				
-  int chs_read, stop = 0;
+  int chs_read, stop = 0, ret;
   
   //TODO MODIFICAR CONDICAO DO CICLO
   while(stop == 0){
@@ -152,7 +153,7 @@ int main(int argc, char** argv){
 	
 	if(chs_read < 0){
 		printf("Erro a ler ficheiro.\n");
-		//TODO AGIR DE ACORDO
+		return -1;
 	}else if(chs_read < max_data_field){ //terminou ficheiro  Divisao do ficheiro em segmentos
 		stop = 1;	//TERMINAR CICLO //TODO VERIFICAR ISTO	
 	}	
@@ -167,23 +168,26 @@ int main(int argc, char** argv){
 	memcpy(&data_packet[4], buffer, chs_read); //data_packet = [PH|DATA]
 	
 	//=================================
+	/* ENVIO DE DADOS */
 	
 	int d_packet_length = P_HEADER_SIZE + chs_read; //PH_size + numero de chars lidos
-	llwrite(port_fd,data_packet, d_packet_length);  
 	
-	//TODO
-	//VERIFICAR RETORNO DO LLWRITE
-	//SE RETORNO = POSITIVE ACK -> seq_actual++;
+	if(llwrite(fd,data_packet, d_packet_length) < 0){
+		printf("ERROR ON LLWRITE.\n");
+		return -1;
+	}
+
+	seq_actual++;	
   }
  
  
   //ENVIA PACOTE DE CONTROLO (END)
   packet_start[0] = 2;  //2 - END
   size=changeToArray(c_packet_start,packet_start);
-  write(port_fd,packet_start,sizeof(packet_start));  //envio de packet END
+  write(fd,packet_start,sizeof(packet_start));  //envio de packet END
   //=====================================
   
-  llclose(port_fd, TRANSMITTER);
+  llclose(fd, TRANSMITTER);
   
  return 0; 
 }

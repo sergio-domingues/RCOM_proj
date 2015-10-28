@@ -47,6 +47,7 @@
 #define MAX_FRAME_I 256   /*TODO USER DEFINE ESTE TAMANHO*/
 #define BAUDRATE_MIN 500
 #define BAUDRATE_MAX 110000
+#define MAX_BUFFER_SIZE 1024
 
 int baudrate;
 
