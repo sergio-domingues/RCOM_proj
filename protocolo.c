@@ -437,14 +437,19 @@ int llread(int fd, char * buffer){
 //======================================
 int llclose(int fd, int tipo){	 
 
+	int ret;
+
 	if(tipo == TRANSMITTER){
-		disconnection_transmitter(fd);
+		ret = disconnection_transmitter(fd);
 	}else if(tipo == RECEIVER){
-		disconnection_receiver(fd);
+		ret = disconnection_receiver(fd);
 	}else
 		return -1;	
 
 
+	if(ret < 0)
+		return -1;
+	
 	sleep(5);
 
     if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {  //repor configs
@@ -452,8 +457,10 @@ int llclose(int fd, int tipo){
       exit(-1);
     }
 
-    if( close(fd) < 0 )
+    if( close(fd) < 0 ) {
+		printf("erro closing port.\n");
         return -1;
+	}
 		
 	printf("Termina ligacao com dispositivo.\n");	
 	return 0;
