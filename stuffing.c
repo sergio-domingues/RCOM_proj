@@ -52,7 +52,7 @@ int read_destuffing(int fd, char * data_to_be_filled){
 			return i;
 		}
 		
-		if(lastByte == ESCAPE && ch == FLAG_STUFFING) ){ 	//#DESTUFF 1
+		if(lastByte == ESCAPE && ch == FLAG_STUFFING ){ 	//#DESTUFF 1
 			data_to_be_filled[i] = FLAG;	
 		} 
 		else if (lastByte == ESCAPE && ch == ESCAPE_STUFFING){ 	//#DESTUFF 2

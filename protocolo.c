@@ -529,9 +529,10 @@ int disconnection_receiver(int fd){
 		rr.bcc = rr.a^rr.c;
 		
 		if( send_frame(fd,rr,sizeof(rr)) < 0 ){	//send DISC
-		printf("Error sending DISC.\n");
-		return -1;		
-	}	
+			printf("Error sending DISC.\n");
+			return -1;		
+		}
+	}		
 	
 	else if (frame_received != DISC )
 		return -1;
