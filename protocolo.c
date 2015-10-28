@@ -24,8 +24,7 @@ static unsigned char calc_bcc(char* buffer, int length);
 
 static struct termios oldtio; //boa pratica limited scope
 static struct sigaction sa;
-static int alarm_flag = 0, counter = 0;
-static int num_sequencia = 0;
+volatile static int alarm_flag = 0, counter = 0, num_sequencia = 0;
 
 /* >>>>>   RESOLVER TODOS OS TODO'S <<<<<< */
 
