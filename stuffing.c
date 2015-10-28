@@ -33,46 +33,38 @@ int write_stuffing(int fd, char * buffer,int length){
 
 int read_destuffing(int fd, char * data_to_be_filled){
 	
-	char ch[2];	
+	char ch, lastByte;
 	int i = 0, res;
 	
 	while(1){ //nao ultrapassar o tamanho esperado
 		
-		res = read(fd,&ch,sizeof(ch));
+		res = read(fd,&ch,sizeof(ch));		
 		
 		if(res <= 0){
 			return -1;  //nao encontrou flag e terminou
 		}
-		else if(res == 1){
-			if(ch[0] == FLAG){
-				return i;
-			}else
-				return -1;
-		}else { //res = 2
-			if(ch[0] == FLAG ){
-				return i;
-			}
-			else if(ch[1] == FLAG){
-				data_to_be_filled[i] = ch[0];
-				i++;
-				return i;
-			}			
-		}		
-				
-		if(ch[0] == ESCAPE && ch[1] == FLAG_STUFFING ){  //#DESTUFF 1
-			data_to_be_filled[i] = FLAG;
-			i++;
-		} else if (ch[0] == ESCAPE && ch[1] == ESCAPE_STUFFING){ //#DESTUFF 2
+		
+		if(i == 0){
+			lastByte = ch;
+		}
+		
+		if(ch == FLAG){  //ENCONTROU FLAG -> TERMINA
+			return i;
+		}
+		
+		if(lastByte == ESCAPE && ch == FLAG_STUFFING) ){ 	//#DESTUFF 1
+			data_to_be_filled[i] = FLAG;	
+		} 
+		else if (lastByte == ESCAPE && ch == ESCAPE_STUFFING){ 	//#DESTUFF 2
 			data_to_be_filled[i] = ESCAPE;	
-			i++;
 		}
-		else {
-			data_to_be_filled[i] = ch[0];
-			data_to_be_filled[i] = ch[1];
-			i+=res;
-		}
+		else{
+			data_to_be_filled[i] = ch;
+		}		
+		
+		i++;
+		lastByte = ch;
 	}
 	
-	//nao encontrou flag
-	return -1;
+	return -1;	//nao encontrou flag
 }
