@@ -143,7 +143,7 @@ int main(int argc, char** argv){
   char data_packet[P_HEADER_SIZE + max_data_field], 
 				buffer[max_data_field];
 				
-  int chs_read, stop = 0, ret;
+  int chs_read, stop = 0;
   
   //TODO MODIFICAR CONDICAO DO CICLO
   while(stop == 0){
