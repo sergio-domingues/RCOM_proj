@@ -230,7 +230,7 @@ int llwrite(int fd, char * buffer, int length){
 	
 	/* BEGINNING FRAME HEADER */
 	
-	unsigned char frame[FRAME_HEADER_SIZE + length + 2]; //2 = bcc2 + flag
+	char frame[FRAME_HEADER_SIZE + length + 2]; //2 = bcc2 + flag
 	
 	frame[0] = FLAG;
 	frame[1] = A_EMI_REC;
@@ -323,6 +323,7 @@ int llwrite(int fd, char * buffer, int length){
 //a ser chamada no receptor
 int llread(int fd, char * buffer){	
   
+	typeFrame received_frame = I;
 	int ack, ret;
 	char s;
 	
@@ -337,7 +338,7 @@ int llread(int fd, char * buffer){
 		//VERIFICA O TIPO DE TRAMA RECEBIDA
 		while(counter < 5){  //TODO REDEFINE HARDCODE VALUE
 		
-			ack = receive_frame(fd,&reusable);
+			ack = receive_frame(fd,&received_frame);
 
 			//TODO CRIAR CICLO DE ESPERA INFINITA OU COM NUM MAX DE "ESPERAS"
 			if(ack < 0){
@@ -393,7 +394,7 @@ int llread(int fd, char * buffer){
 		}
 		
 		unsigned char bcc2;
-		bcc2 calc_bcc(buffer,ret-1); // -1: ignora bcc2
+		bcc2 = calc_bcc(buffer,ret-1); // -1: ignora bcc2
 		
 		//REJEITA FRAME <- ERRO NO BCC2
 		if(bcc2 != buffer[ret-1] ){
@@ -410,7 +411,7 @@ int llread(int fd, char * buffer){
 			reusable.bcc = A_EMI_REC^reusable.c;	
 		}
 		
-		if(send_frame(reusable,sizeof(reusable)) < 0){
+		if(send_frame(fd,reusable,sizeof(reusable)) < 0){
 			printf("Erro na escrita da trama REJ/RR.\n");		
 			return -1; //TODO VER SE ESTE VALOR E INTERPRETADO CORRECTAMENT
 		}
