@@ -103,21 +103,27 @@ void atende(int signal){
 }
 
 
-int transmission_frame_SU(int fd, frame send,int length){
+int transmission_frame_SU(int fd, frame send, int length){
 	
 	typeFrame frame_received = DISC;
 	counter = 0;
 	
 	//loop enqt (emissor not connected receiver) até max_retries	
-	while(counter < MAX_RETRIES) {
+	while(counter < MAX_RETRIES){
 				
 		if( send_frame(fd,send,length) < 0 ){
-			printf("Error sending frame.\n");
-			return -1;
+			printf("Error sending frame.\n Trying to transmit again.\n");
+			continue;
 		}
 		
-		if ( receive_frame(fd, &frame_received) >= 0 ) { //recebe UA frame com sucesso
-			printf("TRANSMITTER-RECEIVER (dis)connection established.\n");
+		//recebe UA frame com sucesso
+		if(receive_frame(fd, &frame_received) >= 0 && frame_received == UA ) { 
+			printf("TRANSMITTER-RECEIVER connection established.\n");
+			break;
+		}
+		//RECEBE DISC
+		else if(receive_frame(fd, &frame_received) >= 0 && frame_received == DISC ){
+			printf("TRANSMITTER-RECEIVER disconnection established.\n");
 			break;
 		}
 	}
@@ -145,7 +151,7 @@ int connection_transmitter(int fd){
 	
 	//loop till send/receive succesfully
 	if (transmission_frame_SU(fd,set,sizeof(set)) < 0){
-		printf("Connection_transmitter: error transmission frame.\n");
+		printf("Connection_transmitter: error/num_max_retransmissions transmitting frame.\n");
 		return -1;
 	}
 
@@ -153,20 +159,27 @@ int connection_transmitter(int fd){
 }
 
 int connection_receiver(int fd){
-
-	//TODO: USAR TIMEOUT RETORNADO POR RECEIVE_FRAME PARA RETRANSMISSOES OU RETORNO
-
-	//espera por uma trama SET correcta
 	typeFrame frame_received = SET;
+
+	int i = 0;		
+	while( i < MAX_RETRIES){
 	
-	if(receive_frame(fd,&frame_received)  < 0){
-		printf("connection_receiver:TIMEOUT on receive frame.\n");
-		return -2;		
+		/* WAIT FOR SET FRAME */
+		if(receive_frame(fd,&frame_received) < 0){
+			printf("connection_receiver: TIMEOUT on receive frame. Retransmitting\n");
+			i++;	
+			continue;		
+		}
+
+		if(frame_received == SET) 
+			break;
+
+		i++;		
 	}
 
-	if(frame_received != SET) //TODO USAR VALOR RETORNADO
-	  return -2;
-		
+	if( i == MAX_RETRIES)  //ATINGIU NUMERO MAXIMO DE RETRANSMISSOES
+		return -1;
+	
 	//envio de UA 
 	frame ua;
 	
@@ -176,7 +189,7 @@ int connection_receiver(int fd){
 	ua.bcc = A_EMI_REC^C_UA;
 	ua.flag2 = FLAG;		
 	
-	if ( send_frame(fd,ua,sizeof(ua)) < 0){
+	if ( send_frame(fd,ua,sizeof(ua) ) < 0){
 		printf("Erro na escrita da trama UA");		
 		return -1;
 	}	
@@ -190,7 +203,6 @@ int connection_receiver(int fd){
 int send_frame(int fd, frame send,int length){
 	return write(fd,&send,length);	
 }
-
 
 int receive_frame(int fd, typeFrame* f){	
 	int pos_ack = 0;
@@ -329,7 +341,6 @@ int llread(int fd, char * buffer){
 	frame reusable;
 	reusable.flag = FLAG;
 	reusable.a = A_EMI_REC;
-	reusable.a = A_EMI_REC;
 	reusable.flag2 = FLAG;
 	
 	while(1){
@@ -337,14 +348,14 @@ int llread(int fd, char * buffer){
 		//VERIFICA O TIPO DE TRAMA RECEBIDA
 		while(counter < 5){  //TODO REDEFINE HARDCODE VALUE
 		
+			/* 	 TENTA RECEBER TRAMA 	*/
 			ack = receive_frame(fd,&received_frame);
 
-			//TODO CRIAR CICLO DE ESPERA INFINITA OU COM NUM MAX DE "ESPERAS"
 			if(ack < 0){
 				printf("llread:timeout reached.\n");
 			}
 
-			/* RECEBE SET FRAME */
+			/* RECEBE SET FRAME -> EMISSOR NAO RECEBEU UA NO LLOPEN */
 			if(ack == C_SET ){
 				
 				reusable.c = C_UA;
@@ -425,7 +436,7 @@ int llread(int fd, char * buffer){
 
 //======================================
 int llclose(int fd, int tipo){	 
-	
+
 	if(tipo == TRANSMITTER){
 		disconnection_transmitter(fd);
 	}else if(tipo == RECEIVER){
@@ -488,12 +499,38 @@ int disconnection_transmitter(int fd){
 int disconnection_receiver(int fd){
 	
 	typeFrame frame_received = DISC, frame_received_2 = UA;
-	//receive DISC
-	if( receive_frame(fd,&frame_received) < 0 ) {
+	
+	frame rr;
+	
+	rr.flag = FLAG;
+	rr.a = A_EMI_REC;
+	rr.flag2 = FLAG;
+	
+	int ack;	
+	
+	//TRY TO receive DISC
+	if( (ack = receive_frame(fd,&frame_received)) < 0 ) {
 		printf("Receiving DISC timeout.\n");
+		return -1;
 	}
-	else
+	else if(frame_received == I){  //emissor nao RECEBEU ULTIMO RR 
 		printf("RECEIVER:Disc received.\n");
+		
+		int s = 1 -(ack >> 5);  //envia rr com campo s correcto
+		
+		rr.c = C_RR & N(s);
+		rr.bcc = rr.a^rr.c;
+		
+		if( send_frame(fd,rr,sizeof(rr)) < 0 ){	//send DISC
+		printf("Error sending DISC.\n");
+		return -1;		
+	}	
+	
+	else if (frame_received != DISC )
+		return -1;
+	
+	
+	/*  	RECEBEU DISC -> ENVIA DISC E ESPERA UA		*/ 
 	
 	frame disc;
 	
@@ -502,8 +539,6 @@ int disconnection_receiver(int fd){
 	disc.c = C_DISC;
 	disc.bcc = A_REC_EMI^C_DISC;
 	disc.flag2 = FLAG;
-
-	//TODO USAR RETRANSMISSIONS EM CASO DE TIMEOUT
 	
 	if( send_frame(fd,disc,sizeof(disc)) < 0 ){	//send DISC
 		printf("Error sending DISC.\n");
