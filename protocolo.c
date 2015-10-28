@@ -323,7 +323,6 @@ int llwrite(int fd, char * buffer, int length){
 //a ser chamada no receptor
 int llread(int fd, char * buffer){	
   
-	typeFrame frame_received = I;
 	int ack, ret;
 	char s;
 	
@@ -338,7 +337,7 @@ int llread(int fd, char * buffer){
 		//VERIFICA O TIPO DE TRAMA RECEBIDA
 		while(counter < 5){  //TODO REDEFINE HARDCODE VALUE
 		
-			ack = receive_frame(fd,&r_frame);
+			ack = receive_frame(fd,&reusable);
 
 			//TODO CRIAR CICLO DE ESPERA INFINITA OU COM NUM MAX DE "ESPERAS"
 			if(ack < 0){
@@ -372,11 +371,12 @@ int llread(int fd, char * buffer){
 		counter = 0;
 		
 		if(s != num_sequencia){  //emissor nao recebeu PREVIOUS ACK 
-			reusable.c = C_RR & N(1-s);
+			s = 1-s;
+			reusable.c = C_RR & N(s);
 			reusable.bcc = A_EMI_REC^reusable.c;
 			
 			//reenvio do previous ack
-			if(send_frame(reusable,sizeof(reusable)) < 0){
+			if(send_frame(fd,reusable,sizeof(reusable)) < 0){
 				printf("Erro na escrita da trama REJ/RR.\n");		
 				return -1; //TODO VER SE ESTE VALOR E INTERPRETADO CORRECTAMENT
 			}
@@ -386,7 +386,7 @@ int llread(int fd, char * buffer){
 		//===============================
 		/* TRATAMENTO DA TRAMA I  */
 		
-		ret = read_destuffing(fd,buffer,length);
+		ret = read_destuffing(fd,buffer);
 		if(ret < 0 ){
 			printf("llread:error on read_destuffing.\n");
 			//TODO AGIR DE ACORDO

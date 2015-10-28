@@ -1,7 +1,7 @@
 #include "macros.h"
 
 //recebe buffer CAMPO DE DADOS
-int write_stuffing(int fd, const unsigned char * buffer,int length){
+int write_stuffing(int fd, const char * buffer,int length){
 		
 	int i,res = 0, acc = 0;
 	//nao faz byte stuffing nas flags
@@ -31,10 +31,10 @@ int write_stuffing(int fd, const unsigned char * buffer,int length){
 	return acc;
 }
 
-int read_destuffing(int fd, unsigned char * data_to_be_filled, int length){
+int read_destuffing(int fd, char * data_to_be_filled){
 	
 	char ch[2];	
-	int i = 0, res, flag_received = 0;
+	int i = 0, res;
 	
 	while(1){ //nao ultrapassar o tamanho esperado
 		

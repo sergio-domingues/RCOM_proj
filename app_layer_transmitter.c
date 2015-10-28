@@ -39,7 +39,7 @@ int changeToArray(control_packet packet, char* array){
      array[4 + strlen(packet.value_filename)] = packet.length_file_length;
      memcpy(&array[5 + strlen(packet.value_filename)], packet.value_file_length,(int)  packet.length_file_length);
      
-     return (5+ strlen(packet.value_filename) +  (int)packet.length_filename);
+     return (5 + strlen(packet.value_filename) +  (int)packet.length_filename );
     
 }
 
