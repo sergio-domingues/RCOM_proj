@@ -1,5 +1,5 @@
 CC = gcc
-FLAGS = -Wall -std=c99
+FLAGS = -Wall
 FILES = protocolo.c stuffing.c statemachine.c
 OUT_EXE = app
 

@@ -56,7 +56,7 @@ int data_packet_handler(char* buffer){
 	int segment_size = (unsigned char)buffer[1]*256 + (unsigned char)buffer[2];
 	
 	/* WRITE FRAGMENT TO FILE DESTINATION */
-	if (write(file_desctiptor, buffer+3 , segment_size) < 0){
+	if (write(file_descriptor, buffer+3 , segment_size) < 0){
 		printf("Error writting file_segment.\n");
 		return -1;
 	}
@@ -109,7 +109,7 @@ int main(int argc, char** argv){
 		
 		int ret;
 		
-		switch (buffer[i]){
+		switch (buffer[0]){
 			
 			case 0: //dados
 				ret = data_packet_handler(&buffer[1]);					
