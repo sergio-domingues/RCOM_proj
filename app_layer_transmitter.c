@@ -110,8 +110,8 @@ int main(int argc, char** argv){
   control_packet c_packet_start;  //c-control d-data
   fillControlPacket(&c_packet_start);
   
-  c_packet_start->length_filename = strlen(argv[NUM_ARGS]) + 1;  //FILENAME SIZE
-  c_packet_start->value_filename = argv[NUM_ARGS];   //FILENAME 
+  c_packet_start.length_filename = strlen(argv[NUM_ARGS]) + 1;  //FILENAME SIZE
+  c_packet_start.value_filename = argv[NUM_ARGS];   //FILENAME 
   
   c_packet_start.length_file_length = sizeof(file_size);
   
@@ -132,7 +132,7 @@ int main(int argc, char** argv){
   int size=changeToArray(c_packet_start,packet_start);
   
   
-  if(llwrite(fd, packet_start, size)< 0) ;  //envio de packet start
+  if(llwrite(fd, packet_start, size)< 0) ;  {//envio de packet start
 	  printf("llwrite:packet start error.\n");
 	  return -1;
   }
@@ -182,8 +182,8 @@ int main(int argc, char** argv){
  
  
   //ENVIA PACOTE DE CONTROLO (END)
-  packet_start[0] = 2;  //2 - END
-  size=changeToArray(c_packet_start,packet_start);
+  packet_start[0] = (char)2;  //2 - END
+  size = changeToArray(c_packet_start, packet_start);
   write(fd,packet_start,sizeof(packet_start));  //envio de packet END
   //=====================================
   
