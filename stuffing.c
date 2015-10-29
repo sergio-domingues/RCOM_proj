@@ -24,8 +24,10 @@ int write_stuffing(int fd, char * buffer,int length){
 			acc++;
 		}
 		
-		if(res != 1)
-			return -1;	
+		if(res < 1){
+			printf("Error writing stuffing.\n");
+			return -1;
+		}	
 	}
 	
 	return acc;
@@ -41,6 +43,7 @@ int read_destuffing(int fd, char * data_to_be_filled){
 		res = read(fd,&ch,sizeof(ch));		
 		
 		if(res <= 0){
+			printf("destuffing error.\n");
 			return -1;  //nao encontrou flag e terminou
 		}
 		

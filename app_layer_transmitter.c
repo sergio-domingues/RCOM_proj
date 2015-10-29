@@ -141,7 +141,7 @@ int main(int argc, char** argv){
   char data_packet[P_HEADER_SIZE + max_data_field], 
 				buffer[max_data_field];
 				
-  int chs_read, stop = 0;
+  int chs_read, stop = 1;  //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>ALTERAR STOP PARA 0
   
   //TODO MODIFICAR CONDICAO DO CICLO
   while(stop == 0){
@@ -182,10 +182,13 @@ int main(int argc, char** argv){
   //ENVIA PACOTE DE CONTROLO (END)
   packet_start[0] = (char)2;  //2 - END
   size = changeToArray(c_packet_start, packet_start);
-  write(fd,packet_start,sizeof(packet_start));  //envio de packet END
+  write(fd,packet_start, sizeof(packet_start));  //envio de packet END
   //=====================================
   
-  llclose(fd, TRANSMITTER);
+  if(llclose(fd, TRANSMITTER) < 0){
+	printf("Error on llclose.\n");
+	return -1;	
+	}
   
  return 0; 
 }

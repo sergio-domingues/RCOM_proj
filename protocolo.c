@@ -254,6 +254,11 @@ int llwrite(int fd, char * buffer, int length){
 	// I = [FH]	
 	
 	memcpy(&frame[4],buffer,length);  // I = [FH|PH|DATA]	
+
+	int i ;
+	for(i=0; i < length; i++){
+		printf("frame[%d]:%c\n",i,frame[i]);
+	}
 	//============================
 	
 	/* TAIL FRAME HEADER */
@@ -368,8 +373,8 @@ int llread(int fd, char * buffer){
 				else 
 					printf("UA frame sent.\n");					
 			}
-			else if(ack == C_I_1 || ack == C_I_0){  // FRAME I
-				s = ack >> 5;
+			else if(frame_received == I){  // FRAME I
+				s = ack >> 5; // ack -> campo de controlo da  trama
 				break;  			
 			}		
 		}
