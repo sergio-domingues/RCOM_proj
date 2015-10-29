@@ -111,7 +111,7 @@ int transmission_frame_SU(int fd, frame send, int length){
 	//loop enqt (emissor not connected receiver) até max_retries	
 	while(counter < MAX_RETRIES){
 				
-		if( send_frame(fd,send,length) < 0 ){
+		if( send_frame(fd,send,length) <= 0 ){
 			printf("Error sending frame.\n Trying to transmit again.\n");
 			sleep(1);			
 			counter++;
@@ -121,7 +121,7 @@ int transmission_frame_SU(int fd, frame send, int length){
 		printf("SET FRAME SENT.\n");
 		
 		//recebe UA frame com sucesso
-		if(receive_frame(fd, &frame_received) >= 0 && frame_received == UA ) { 
+		if( (receive_frame(fd, &frame_received) >= 0) && (frame_received == UA) ) { 
 			printf("TRANSMITTER-RECEIVER connection established.\n");
 			break;
 		}
@@ -131,7 +131,7 @@ int transmission_frame_SU(int fd, frame send, int length){
 	}
 	
 	if(counter == MAX_RETRIES){ //nao conseguiu estabelecer conexao
-		printf("(dis)connection not established.\n");
+		printf("connection not established.\n");
 		counter = 0;
 		return -1;
 	}
@@ -195,6 +195,8 @@ int transmission_frame_disc(int fd, frame send, int length){
 
 
 int connection_transmitter(int fd){		
+	printf("CONNECTION TRANSMITTER.\n");	
+
 	//envia trama SET
 	frame set;
 	
