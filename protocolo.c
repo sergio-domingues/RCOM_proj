@@ -106,51 +106,53 @@ void atende(int signal){
 int transmission_frame_SU(int fd, frame send, int length){
 	
 	typeFrame frame_received = DISC;
-	counter = 0;
+	int cnt = 0;
 	
 	//loop enqt (emissor not connected receiver) até max_retries	
-	while(counter < MAX_RETRIES){
-				
-		if( send_frame(fd,send,length) <= 0 ){
-			printf("Error sending frame.\n Trying to transmit again.\n");
+	
+	while(cnt < MAX_RETRIES){
+			int res;	
+
+		if( (res = send_frame(fd,send,length)) <= 0 ){
+			fprintf(stderr,"Error sending frame.\n Trying to transmit again.\n");
 			sleep(1);			
-			counter++;
+			cnt++;
 			continue;
 		}
 
 		printf("SET FRAME SENT.\n");
 		
 		//recebe UA frame com sucesso
-		if( (receive_frame(fd, &frame_received) >= 0) && (frame_received == UA) ) { 
-			printf("TRANSMITTER-RECEIVER connection established.\n");
+
+		if( (receive_frame(fd, &frame_received)) >= 0 && (frame_received == UA) ) { 
+			fprintf(stderr,"TRANSMITTER-RECEIVER connection established.\n");
 			break;
 		}
 		else {
-			counter++;
+			printf("nao recebe UA\n");
+			cnt++;
 		}		
 	}
 	
-	if(counter == MAX_RETRIES){ //nao conseguiu estabelecer conexao
+	if(cnt == MAX_RETRIES){ //nao conseguiu estabelecer conexao
 		printf("connection not established.\n");
-		counter = 0;
 		return -1;
 	}
 	
-	counter = 0;
 	return 0; //success	
 }
 
 int transmission_frame_disc(int fd, frame send, int length){
 	
 	typeFrame frame_received = DISC;
-	counter = 0;
+	int cnt = 0;
 	
 	//loop enqt (emissor not connected receiver) até max_retries	
-	while(counter < MAX_RETRIES){
+	while(cnt < MAX_RETRIES){
 				
 		if( send_frame(fd,send,length) < 0 ){
 			printf("Error sending frame.\n Trying to transmit again.\n");
-			counter++;			
+			cnt++;			
 			continue;
 		}
 
@@ -161,7 +163,7 @@ int transmission_frame_disc(int fd, frame send, int length){
 			printf("DISC RECEIVED.\n");
 		}
 		else {
-			counter++;
+			cnt++;
 			continue;
 		}
 
@@ -181,13 +183,11 @@ int transmission_frame_disc(int fd, frame send, int length){
 		printf("disconnection: UA SENT.\n");
 	}
 	
-	if(counter == MAX_RETRIES){ //nao conseguiu estabelecer conexao
+	if(cnt == MAX_RETRIES){ //nao conseguiu estabelecer conexao
 		printf("disconnection not established.\n");
-		counter = 0;
 		return -1;
 	}
 	
-	counter = 0;
 	return 0; //success	
 }
 
@@ -195,6 +195,7 @@ int transmission_frame_disc(int fd, frame send, int length){
 
 
 int connection_transmitter(int fd){		
+	
 	printf("CONNECTION TRANSMITTER.\n");	
 
 	//envia trama SET
