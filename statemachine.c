@@ -56,10 +56,18 @@ int A_RCV(char c,typeFrame* f){
 			*f = RR;			
 		break;
 
+		case (C_RR|N(1)):
+			*f = RR;			
+		break;		
+
+		case (C_REJ|N(1)):
+			*f = REJ;			
+		break;
+
 		case C_REJ:
 			*f = REJ;			
 		break;
-		
+
 		case C_I_1:
 			*f = I;
 		break; 

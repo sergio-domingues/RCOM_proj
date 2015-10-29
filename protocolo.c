@@ -358,7 +358,7 @@ int llread(int fd, char * buffer){
 			}
 
 			/* RECEBE SET FRAME -> EMISSOR NAO RECEBEU UA NO LLOPEN */
-			if(ack == C_SET ){
+			if(received_frame == SET ){
 				
 				reusable.c = C_UA;
 				reusable.bcc = A_EMI_REC^C_UA;
@@ -373,6 +373,7 @@ int llread(int fd, char * buffer){
 			else if(received_frame == I){  // FRAME I
 				printf("received I frame.\n");
 				s = ack >> 5; // ack -> campo de controlo da  trama
+				printf("s:%d\n",s);
 				break;  			
 			}		
 		}
@@ -385,7 +386,10 @@ int llread(int fd, char * buffer){
 		counter = 0;
 		
 		if(s != num_sequencia){  //emissor nao recebeu PREVIOUS ACK 
-			s = 1-s;
+
+			printf("ENVIA RR, ANTERIOR FOI PERDIDO.\n");
+
+			s = 1-s; 		//actualzia apra o valor a ser enviado no RR 
 			reusable.c = C_RR & N(s);
 			reusable.bcc = A_EMI_REC^reusable.c;
 			
@@ -408,21 +412,20 @@ int llread(int fd, char * buffer){
 		
 		char bcc2;
 		bcc2 = calc_bcc(buffer,ret-1); // -1: ignora bcc2
-		printf("bcc2:%d\n",buffer[ret-2]);
+		printf(">>>>>>>>>>>>>>bcc2:%d\n",buffer[ret-1]);
 		
 		
 		//REJEITA FRAME <- ERRO NO BCC2
 		if(bcc2 != buffer[ret-1] ){
 			printf("llread: bcc is different.\n");
 			
-			reusable.c = C_REJ & N(s);
+			reusable.c = C_REJ | N(s);
 			reusable.bcc = A_EMI_REC^reusable.c;
 		}
 		else{
-			//rej => RR  //reutilizacao da frame
 			num_sequencia = 1-num_sequencia;
 			
-			reusable.c = C_RR & N(s);
+			reusable.c = C_RR | N(num_sequencia);
 			reusable.bcc = A_EMI_REC^reusable.c;	
 		}
 		
@@ -431,6 +434,7 @@ int llread(int fd, char * buffer){
 			return -1;
 		}
 		else{
+			printf("ENVIA TRAMA REJ/RR.\n");
 			break;
 		}
 	}
