@@ -101,7 +101,7 @@ int main(int argc, char** argv){
 		printf("Max Retries [0,%d]./n",MAX_RETRIES_MAX);
 		return -1;
 	}
-	MAX_RETRIES = atoi(argv[6]);
+	MAX_RETRIES = atoi(argv[4]);
 	
 	//=========================
     /* OPEN PORT AND CONNECTS */

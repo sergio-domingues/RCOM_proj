@@ -113,22 +113,21 @@ int transmission_frame_SU(int fd, frame send, int length){
 				
 		if( send_frame(fd,send,length) < 0 ){
 			printf("Error sending frame.\n Trying to transmit again.\n");
+			sleep(1);			
 			counter++;
 			continue;
 		}
 
-		printf("DISC SENT.\n");
+		printf("SET FRAME SENT.\n");
 		
 		//recebe UA frame com sucesso
 		if(receive_frame(fd, &frame_received) >= 0 && frame_received == UA ) { 
 			printf("TRANSMITTER-RECEIVER connection established.\n");
 			break;
 		}
-		//RECEBE DISC
-		else if(receive_frame(fd, &frame_received) >= 0 && frame_received == DISC ){
-			printf("TRANSMITTER-RECEIVER disconnection established.\n");
-			break;
-		}
+		else {
+			counter++;
+		}		
 	}
 	
 	if(counter == MAX_RETRIES){ //nao conseguiu estabelecer conexao
