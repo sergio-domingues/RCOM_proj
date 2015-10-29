@@ -23,7 +23,7 @@ typedef struct {
 void fillControlPacket(control_packet * packet){
     packet->control_field = I_CONTROL_START;  //START POR DEFEITO
  
-    packet->type_filename = CTRL_ARG_FILE_NAME; //nome do ficheiro
+    packet->type_filename = CTRL_ARG_FILE_NAME; //type : nome do ficheiro
  
     packet->type_file_length = CTRL_ARG_FILE_LENGTH; 	//tamanho do ficheiro
 }
@@ -35,12 +35,11 @@ int changeToArray(control_packet packet, char* array){
      array[2] = packet.length_filename;
      memcpy(&array[3], packet.value_filename, (int)packet.length_filename);
      
-     array[3 + strlen(packet.value_filename)] = packet.type_file_length;
-     array[4 + strlen(packet.value_filename)] = packet.length_file_length;
-     memcpy(&array[5 + strlen(packet.value_filename)], packet.value_file_length,(int)  packet.length_file_length);
-     
-     return (5 + strlen(packet.value_filename) +  (int)packet.length_filename );
-    
+     array[3 + strlen(packet.value_filename)+1] = packet.type_file_length;
+     array[4 + strlen(packet.value_filename)+1] = packet.length_file_length;
+     memcpy(&array[5 + strlen(packet.value_filename)+1], packet.value_file_length, (int)packet.length_file_length);
+
+     return (5 + (int)packet.length_filename +  (int)packet.length_file_length );    
 }
 
 //============================
@@ -114,7 +113,7 @@ int main(int argc, char** argv){
   c_packet_start.value_filename = argv[NUM_ARGS];   //FILENAME 
   
   c_packet_start.length_file_length = sizeof(file_size);
-  
+
   //converter inteiro em array de bytes
   unsigned char v[sizeof(file_size)]; 
   int i;
@@ -129,10 +128,9 @@ int main(int argc, char** argv){
   //TODO: VERIFICAR RETORNO DO LLWRITE
   char packet_start[40];
   
-  int size=changeToArray(c_packet_start,packet_start);
-  
-  
-  if(llwrite(fd, packet_start, size)< 0) ;  {//envio de packet start
+  int size = changeToArray(c_packet_start, packet_start);
+
+  if(llwrite(fd, packet_start, size) < 0){//envio de packet start
 	  printf("llwrite:packet start error.\n");
 	  return -1;
   }
