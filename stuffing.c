@@ -54,8 +54,9 @@ int read_destuffing(int fd, char * data_to_be_filled){
 
 	while(1){ //nao ultrapassar o tamanho esperado
 		
-		res = read(fd,&ch,sizeof(ch));		
-		//printf("destuff: %d\n",ch);
+		res = read(fd,&ch,sizeof(ch));
+		//printf("destuff:%X\n",(unsigned char) ch);
+	
 		if(res <= 0){
 			printf("destuffing error.\n");
 			return -1;  //nao encontrou flag e terminou
@@ -66,6 +67,12 @@ int read_destuffing(int fd, char * data_to_be_filled){
 		}
 		
 		if(ch == FLAG){  //ENCONTROU FLAG -> TERMINA
+			int j =0;			
+			for(j=0;j<i;j++){
+				printf("0x%02x ",(unsigned char)data_to_be_filled[j]);
+			}printf("\n");
+
+
 			return i;
 		}
 		
@@ -77,6 +84,8 @@ int read_destuffing(int fd, char * data_to_be_filled){
 		}
 		else if (ch != ESCAPE){
 			data_to_be_filled[i] = ch;
+		}else{
+			i--;
 		}		
 		
 		i++;

@@ -113,7 +113,7 @@ int transmission_frame_SU(int fd, frame send, int length){
 				
 		if( send_frame(fd,send,length) < 0 ){
 			printf("Error sending frame.\n Trying to transmit again.\n");
-			counter++;			
+			counter++;
 			continue;
 		}
 
@@ -465,6 +465,7 @@ int llread(int fd, char * buffer){
 		/* TRATAMENTO DA TRAMA I  */
 		
 		ret = read_destuffing(fd,buffer);
+		printf("Lidos:%d\n",ret);
 		if(ret < 0 ){
 			printf("llread:error on read_destuffing.\n");
 			//TODO AGIR DE ACORDO
@@ -472,18 +473,21 @@ int llread(int fd, char * buffer){
 		
 		char bcc2;
 		bcc2 = calc_bcc(buffer,ret-1); // -1: ignora bcc2
-		printf(">>>>>>>>>>>>>>bcc2:%d\n",buffer[ret-1]);
+		printf(">>>>>>>>>>>>>>bcc2:%d\n",bcc2);
 		
 		
 		//REJEITA FRAME <- ERRO NO BCC2
 		if(bcc2 != buffer[ret-1] ){
 			printf("llread: bcc is different.\n");
+
+			printf("ENVIA TRAMA REJ.\n");
 			
 			reusable.c = C_REJ | N(s);
 			reusable.bcc = A_EMI_REC^reusable.c;
 		}
 		else{
 			num_sequencia = 1-num_sequencia;
+			printf("ENVIA TRAMA RR.\n");
 			
 			reusable.c = C_RR | N(num_sequencia);
 			reusable.bcc = A_EMI_REC^reusable.c;	
@@ -494,7 +498,7 @@ int llread(int fd, char * buffer){
 			return -1;
 		}
 		else{
-			printf("ENVIA TRAMA REJ/RR.\n");
+		
 			break;
 		}
 	}
@@ -505,9 +509,8 @@ int llread(int fd, char * buffer){
 
 //======================================
 int llclose(int fd, int tipo){	 
-	printf("LLCLOSE.\n");
 
-
+	printf("LLCLOSE\n");
 	int ret;
 
 	if(tipo == TRANSMITTER){
