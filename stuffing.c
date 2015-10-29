@@ -47,7 +47,7 @@ int read_destuffing(int fd, char * data_to_be_filled){
 	while(1){ //nao ultrapassar o tamanho esperado
 		
 		res = read(fd,&ch,sizeof(ch));		
-		
+		//printf("destuff: %d\n",ch);
 		if(res <= 0){
 			printf("destuffing error.\n");
 			return -1;  //nao encontrou flag e terminou

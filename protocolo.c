@@ -336,7 +336,7 @@ int llwrite(int fd, char * buffer, int length){
 //a ser chamada no receptor
 int llread(int fd, char * buffer){	
   
-	typeFrame received_frame = I;
+	typeFrame received_frame = DISC;
 	int ack, ret;
 	char s;
 	
@@ -371,7 +371,11 @@ int llread(int fd, char * buffer){
 					printf("UA frame sent.\n");					
 			}
 			else if(received_frame == I){  // FRAME I
+<<<<<<< HEAD
 				printf("received I frame.\n");
+=======
+printf("received I frame.\n");
+>>>>>>> 12a27ce226c84f694fb85bec6f321efc395f907e
 				s = ack >> 5; // ack -> campo de controlo da  trama
 				break;  			
 			}		
@@ -406,9 +410,10 @@ int llread(int fd, char * buffer){
 			//TODO AGIR DE ACORDO
 		}
 		
-		unsigned char bcc2;
+		char bcc2;
 		bcc2 = calc_bcc(buffer,ret-1); // -1: ignora bcc2
 		printf("bcc2:%d\n",buffer[ret-2]);
+		
 		
 		//REJEITA FRAME <- ERRO NO BCC2
 		if(bcc2 != buffer[ret-1] ){
