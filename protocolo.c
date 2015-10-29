@@ -371,11 +371,7 @@ int llread(int fd, char * buffer){
 					printf("UA frame sent.\n");					
 			}
 			else if(received_frame == I){  // FRAME I
-<<<<<<< HEAD
 				printf("received I frame.\n");
-=======
-printf("received I frame.\n");
->>>>>>> 12a27ce226c84f694fb85bec6f321efc395f907e
 				s = ack >> 5; // ack -> campo de controlo da  trama
 				break;  			
 			}		
