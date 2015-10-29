@@ -99,6 +99,7 @@ int main(int argc, char** argv){
 	
 	while(stop == 0){
 		int res;
+		
 		res = llread(port_fd,buffer);
 		
 		if(res < 0){
@@ -111,11 +112,13 @@ int main(int argc, char** argv){
 		switch (buffer[0]){
 			
 			case 0: //dados
-				ret = data_packet_handler(&buffer[1]);					
+				ret = data_packet_handler(&buffer[1]);
+				printf("data packet handler start.\n");					
 			break;
 			
 			case 1: //start
 				ret = ctrl_packet_handler(&buffer[1],0);
+				printf("ctrl packet handler.\n");	
 				
 				/* OPEN FILE */
 				file_descriptor = open(c_packets[0].file_name, O_CREAT|O_WRONLY, 0666);
@@ -128,6 +131,7 @@ int main(int argc, char** argv){
 				
 			case 2:	//end	
 				ret = ctrl_packet_handler(&buffer[1],1);
+				printf("data packet handler end.\n");	
 
 				if(close(file_descriptor) < 0){
 					printf("Erro closing file.\n");

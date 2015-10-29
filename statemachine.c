@@ -22,7 +22,7 @@ int flag_RCV(char c,typeFrame* f){
      printf("flag_RCV\n");	
 
      if(c == A_EMI_REC || c== A_REC_EMI){
-	stateFunc = &A_RCV;
+		stateFunc = &A_RCV;
         receiveFrame.a = c;
      }
      else if ( c == FLAG)
@@ -114,6 +114,7 @@ int BCC(char c,typeFrame* f){
 	
     if (c == FLAG){
 	    receiveFrame.flag2 = FLAG;
+		stateFunc = &start;
 	    return receiveFrame.c;
 	}
     else 
