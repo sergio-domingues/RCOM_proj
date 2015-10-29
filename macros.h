@@ -52,8 +52,8 @@
 
 int baudrate;
 
-int MAX_RETRIES =3;
-int ALARM_SPAN=3;
+int MAX_RETRIES;
+int ALARM_SPAN;
 
 typedef enum { SET, DISC, UA, RR, REJ, I } typeFrame;
 
