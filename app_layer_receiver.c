@@ -119,12 +119,12 @@ int main(int argc, char** argv){
 			
 			case 0: //dados
 				ret = data_packet_handler(&buffer[1]);
-				printf("data packet handler start.\n");					
+				printf("data packet handler.\n");					
 			break;
 			
 			case 1: //start
 				ret = ctrl_packet_handler(&buffer[1],0);
-				printf("ctrl packet handler.\n");	
+				printf("ctrl packet handler start.\n");	
 				
 				/* OPEN FILE */
 
@@ -140,7 +140,7 @@ int main(int argc, char** argv){
 				
 			case 2:	//end	
 				ret = ctrl_packet_handler(&buffer[1],1);
-				printf("data packet handler end.\n");	
+				printf("crtl packet handler end.\n");	
 
 				if(close(file_descriptor) < 0){
 					printf("Erro closing file.\n");
@@ -169,7 +169,7 @@ int main(int argc, char** argv){
 	//NO FINAL REPORTAR
 
   
-	if(llclose(port_fd, TRANSMITTER) < 0){
+	if(llclose(port_fd, RECEIVER) < 0){
 		printf("Erro on llclose.\n");
 		return -1;
 	}
