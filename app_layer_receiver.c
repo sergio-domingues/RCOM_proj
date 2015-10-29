@@ -100,17 +100,20 @@ int main(int argc, char** argv){
 	}
 	//=========================
 	
-	int stop = 0;
+	int stop = 0, cnt = 0;
 	char buffer[MAX_BUFFER_SIZE];
 	
-	while(stop == 0){
+	while(stop == 0 && cnt < MAX_RETRIES){
 		int res;
 		
 		res = llread(port_fd,buffer);
 		
 		if(res < 0){
 			printf("Error in llread.\n");
-			return -1;
+			
+			cnt++;
+			sleep(1);
+			continue;			
 		}
 		
 		int ret;
@@ -163,6 +166,9 @@ int main(int argc, char** argv){
 				
 		num_sequencia++;
 	}
+
+	if(cnt == MAX_RETRIES)
+		return -1;
 	
 	//TODO: VERIFICACOES
 	

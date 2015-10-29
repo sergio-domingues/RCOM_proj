@@ -268,7 +268,7 @@ int receive_frame(int fd, typeFrame* f){
 	
 	while(pos_ack == 0){
 	    read(fd,&ch,1); //TODO: VERIFICAR RETORNO ??
-	    printf("char recebido: 0x%X \n",ch);
+	    printf("char recebido: 0x%X \n",(unsigned char)ch);
 	    pos_ack = stateFunc(ch,f);
 	    
 	    if(alarm_flag){ //disparou alarme
@@ -415,6 +415,9 @@ int llread(int fd, char * buffer){
 
 			if(ack < 0){
 				printf("llread:timeout reached.\n");
+				counter++;
+				sleep(1);
+				continue;
 			}
 
 			/* RECEBE SET FRAME -> EMISSOR NAO RECEBEU UA NO LLOPEN */
@@ -432,6 +435,7 @@ int llread(int fd, char * buffer){
 			}
 			else if(received_frame == I){  // FRAME I
 				printf("received I frame.\n");
+				counter=0;
 				s = ack >> 5; // ack -> campo de controlo da  trama
 				printf("s:%d\n",s);
 				break;  			
@@ -468,7 +472,9 @@ int llread(int fd, char * buffer){
 		printf("Lidos:%d\n",ret);
 		if(ret < 0 ){
 			printf("llread:error on read_destuffing.\n");
-			//TODO AGIR DE ACORDO
+			counter++;
+			//sleep(1);
+			continue;			
 		}
 		
 		char bcc2;
@@ -497,8 +503,7 @@ int llread(int fd, char * buffer){
 			printf("Erro na escrita da trama REJ/RR.\n");		
 			return -1;
 		}
-		else{
-		
+		else{	
 			break;
 		}
 	}
