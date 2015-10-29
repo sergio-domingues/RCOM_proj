@@ -44,13 +44,16 @@
 #define FALSE 0
 #define TRUE 1
 
-#define MAX_RETRIES 3
-#define ALARM_SPAN 3
+#define MAX_RETRIES_MAX 5
+#define ALARM_SPAN_MAX 10
 #define BAUDRATE_MIN 500
 #define BAUDRATE_MAX 110000
 #define MAX_BUFFER_SIZE 1024
 
 int baudrate;
+
+int MAX_RETRIES =3;
+int ALARM_SPAN=3;
 
 typedef enum { SET, DISC, UA, RR, REJ, I } typeFrame;
 

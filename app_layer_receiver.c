@@ -1,7 +1,7 @@
 #include "macros.h"
 #include "protocolo.h"
 
-#define NUM_ARGS 2 
+#define NUM_ARGS 4 
 
 typedef struct{	
 	int file_length;
@@ -89,7 +89,20 @@ int main(int argc, char** argv){
 		return -1;
 	}	
 	
-	baudrate = atoi(argv[2]);	
+	baudrate = atoi(argv[2]);
+
+	if( atoi(argv[3]) < 0 || atoi(argv[3]) > ALARM_SPAN_MAX ){
+		printf("Alarm Span [0,%d]./n",ALARM_SPAN_MAX);
+		return -1;
+	}
+	ALARM_SPAN = atoi(argv[3]);
+
+	if( atoi(argv[4]) < 0 || atoi(argv[4]) > MAX_RETRIES_MAX ){
+		printf("Max Retries [0,%d]./n",MAX_RETRIES_MAX);
+		return -1;
+	}
+	MAX_RETRIES = atoi(argv[6]);
+	
 	//=========================
     /* OPEN PORT AND CONNECTS */
 	

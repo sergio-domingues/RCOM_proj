@@ -4,7 +4,7 @@
 #define FILENAME "pinguim.gif"
 #define P_HEADER_SIZE 	4 			/* BYTES */
 #define FILE_SECTION_MAX_SIZE 5000  /* BYTES */
-#define NUM_ARGS 4
+#define NUM_ARGS 6
 
 typedef struct {
  unsigned char control_field;  //START POR DEFEITO
@@ -47,7 +47,7 @@ int changeToArray(control_packet packet, char* array){
 int main(int argc, char** argv){
   
 	if(argc < NUM_ARGS + 1){
-		printf("Usage: app [PORT] [BAUDRATE] [FRAGMENT_SIZE BYTES] [FILENAME].\n");
+		printf("Usage: app [PORT] [BAUDRATE] [FRAGMENT_SIZE BYTES] [FILENAME] [ALARM SPAN] [TIMEOUT].\n");
 		return -1;
 	}
 
@@ -72,7 +72,20 @@ int main(int argc, char** argv){
 		printf("data's frames size ]0,%d]./n",MAX_BUFFER_SIZE);
 		return -1;
 	}	
-	int max_data_field = atoi(argv[3]); 
+	int max_data_field = atoi(argv[3]);
+
+	if( atoi(argv[5]) < 0 || atoi(argv[5]) > ALARM_SPAN_MAX ){
+		printf("Alarm Span [0,%d]./n",ALARM_SPAN_MAX);
+		return -1;
+	}
+	ALARM_SPAN = atoi(argv[5]);
+
+	if( atoi(argv[6]) < 0 || atoi(argv[6]) > MAX_RETRIES_MAX ){
+		printf("Max Retries [0,%d]./n",MAX_RETRIES_MAX);
+		return -1;
+	}
+	MAX_RETRIES = atoi(argv[6]);
+	 
   //===================
   
   /* OPEN PORT AND CONNECTS */
