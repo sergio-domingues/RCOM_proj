@@ -113,8 +113,11 @@ int transmission_frame_SU(int fd, frame send, int length){
 				
 		if( send_frame(fd,send,length) < 0 ){
 			printf("Error sending frame.\n Trying to transmit again.\n");
+			counter++;			
 			continue;
 		}
+
+		printf("DISC SENT.\n");
 		
 		//recebe UA frame com sucesso
 		if(receive_frame(fd, &frame_received) >= 0 && frame_received == UA ) { 
@@ -137,6 +140,59 @@ int transmission_frame_SU(int fd, frame send, int length){
 	counter = 0;
 	return 0; //success	
 }
+
+int transmission_frame_disc(int fd, frame send, int length){
+	
+	typeFrame frame_received = DISC;
+	counter = 0;
+	
+	//loop enqt (emissor not connected receiver) até max_retries	
+	while(counter < MAX_RETRIES){
+				
+		if( send_frame(fd,send,length) < 0 ){
+			printf("Error sending frame.\n Trying to transmit again.\n");
+			counter++;			
+			continue;
+		}
+
+		printf("DISC SENT.\n");
+		
+		//RECEBE DISC
+		if(receive_frame(fd, &frame_received) >= 0 && frame_received == DISC ){
+			printf("DISC RECEIVED.\n");
+		}
+		else {
+			counter++;
+			continue;
+		}
+
+		//envio de UA 
+		frame ua;
+	
+		ua.flag = FLAG;
+		ua.a = A_EMI_REC;
+		ua.c = C_UA;
+		ua.bcc = A_EMI_REC^C_UA;
+		ua.flag2 = FLAG;		
+	
+		if ( send_frame(fd,ua,sizeof(ua) ) < 0){
+			printf("Erro na escrita da trama UA");		
+			return -1;
+		}	
+		printf("disconnection: UA SENT.\n");
+	}
+	
+	if(counter == MAX_RETRIES){ //nao conseguiu estabelecer conexao
+		printf("disconnection not established.\n");
+		counter = 0;
+		return -1;
+	}
+	
+	counter = 0;
+	return 0; //success	
+}
+
+
 
 
 int connection_transmitter(int fd){		
@@ -262,6 +318,8 @@ int llwrite(int fd, char * buffer, int length){
 	frame[sizeof(frame)-2] = calc_bcc(buffer, length); //calcula bcc2 do campo de dados
 	frame[sizeof(frame)-1] = FLAG;
 	
+	printf(">>>>>>>>>>>bcc : %d \n", frame[sizeof(frame)-2]);
+
 	//I = [FH|PH|DATA|FT]
 	//============================
 	int chs_w;
@@ -274,6 +332,8 @@ int llwrite(int fd, char * buffer, int length){
 			printf("error writting stuffed frame\n");
 			return -1;
 		}
+
+		printf(">>>>>chars writtend: %d.\n",chs_w);
 		//============================		
 		
 		//espera resposta do receptor			
@@ -294,7 +354,6 @@ int llwrite(int fd, char * buffer, int length){
 				if(r_frame == RR){ //positive acknowledge				
 					printf("Received RR\n");
 					if( (ack >> 5) == num_sequencia){
-						printf("<<<<<<<<<<<<<<<<<<CENAS.\n");
 						retries = -1; //termina ciclo exterior "sucesso"
 						break;
 					} else { 		//valor nao esperado
@@ -446,6 +505,8 @@ int llread(int fd, char * buffer){
 
 //======================================
 int llclose(int fd, int tipo){	 
+	printf("LLCLOSE.\n");
+
 
 	int ret;
 
@@ -488,28 +549,14 @@ int disconnection_transmitter(int fd){
 	disc.flag2 = FLAG;	
 	
 	//loop send/receive DISC
-	if ( transmission_frame_SU(fd,disc,sizeof(disc)) < 0 ) {
+	printf("try to send disc.\n");
+	if ( transmission_frame_disc(fd,disc,sizeof(disc)) < 0 ) {
 		printf("Error transmission/reception DISC's.\n");
 		return -1;	
 	}
 	else
-		printf("TRANSMITTER:DISC SENT.\n");
-		
-	frame ua;	
-	ua.flag = FLAG;
-	ua.a = A_EMI_REC;
-	ua.c = C_UA;
-	ua.bcc = A_EMI_REC^C_UA;
-	ua.flag2 = FLAG;		
-	
-	//chama send(ua)
-	if ( send_frame(fd,ua,sizeof(ua)) < 0 ){
-		printf("Error sending UA.\n");		
-		return -1;
-	}
-	else	
-		printf("TRANSMITTER:UA frame sent.\n");
-	
+		printf("DISCONNECTED.\n");
+
 	return 0; 
 }
 

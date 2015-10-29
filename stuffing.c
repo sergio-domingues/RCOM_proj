@@ -1,29 +1,36 @@
 #include "macros.h"
 
 //recebe buffer CAMPO DE DADOS
-int write_stuffing(int fd, char * buffer,int length){
+int write_stuffing(int fd, char * buffer, int length){
 		
 	int i,res = 0, acc = 0;
 	//nao faz byte stuffing nas flags
-	unsigned char send[2];
+	char send[2];
 	
+	for(i = 0; i < length; i++){
+		printf("0x%02x ",(unsigned char)buffer[i]);
+		
+	}printf("\n");
+
+
 	write(fd,&buffer[0],1);  //flag inicial
 
 	for(i=1; i < length - 1; i++){	
 	 
 		if(buffer[i] == FLAG){
-			send[0]=ESCAPE;
-			send[1]=FLAG_STUFFING;
+			send[0] = ESCAPE;
+			send[1] = FLAG_STUFFING;
+
 			res = write(fd,&send,2);
 			acc += 2;			
 		}else if(buffer[i] == ESCAPE){
-			send[0]=ESCAPE;
-			send[1]=ESCAPE_STUFFING;
-			res = write(fd,&send,2);
-			
+			send[0] = ESCAPE;
+			send[1] = ESCAPE_STUFFING;
+
+			res = write(fd,&send,2);			
 			acc += 2;	
 		}else {
-			printf("stuff:%d\n",buffer[i]);
+			//printf("stuff:%x\n",(unsigned char)buffer[i]);
 			res = write(fd,&buffer[i],1);
 			acc++;
 		}
@@ -34,7 +41,7 @@ int write_stuffing(int fd, char * buffer,int length){
 		}	
 	}
 
-	write(fd,&buffer[length-1],1);  //flag final
+	write(fd,&buffer[length -1],1);  //flag final
 	
 	return acc;
 }
@@ -42,8 +49,9 @@ int write_stuffing(int fd, char * buffer,int length){
 int read_destuffing(int fd, char * data_to_be_filled){
 	
 	char ch, lastByte;
-	int i = 0, res;
-	
+	int i = 0, res;	
+
+
 	while(1){ //nao ultrapassar o tamanho esperado
 		
 		res = read(fd,&ch,sizeof(ch));		
@@ -67,7 +75,7 @@ int read_destuffing(int fd, char * data_to_be_filled){
 		else if (lastByte == ESCAPE && ch == ESCAPE_STUFFING){ 	//#DESTUFF 2
 			data_to_be_filled[i] = ESCAPE;	
 		}
-		else{
+		else if (ch != ESCAPE){
 			data_to_be_filled[i] = ch;
 		}		
 		

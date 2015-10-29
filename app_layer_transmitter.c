@@ -130,10 +130,11 @@ int main(int argc, char** argv){
   
   int size = changeToArray(c_packet_start, packet_start);
 
-  if(llwrite(fd, packet_start, size) < 0){//envio de packet start
+  if(llwrite(fd, packet_start, size) < 0) {//envio de packet start
 	  printf("llwrite:packet start error.\n");
 	  return -1;
   }
+
   printf("packet start sent\n");  
   
   /* ENVIO DE SEGMENTOS DO FICHEIRO */  
@@ -141,7 +142,7 @@ int main(int argc, char** argv){
   char data_packet[P_HEADER_SIZE + max_data_field], 
 				buffer[max_data_field];
 				
-  int chs_read, stop = 1;  //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>ALTERAR STOP PARA 0
+  int chs_read, stop = 0; 
   
   //TODO MODIFICAR CONDICAO DO CICLO
   while(stop == 0){
@@ -180,9 +181,13 @@ int main(int argc, char** argv){
  
  
   //ENVIA PACOTE DE CONTROLO (END)
-  packet_start[0] = (char)2;  //2 - END
+  c_packet_start.control_field = (char)2;  //2 - END
   size = changeToArray(c_packet_start, packet_start);
-  write(fd,packet_start, sizeof(packet_start));  //envio de packet END
+  
+  if(llwrite(fd, packet_start, size) < 0){//envio de packet start
+	  printf("llwrite:packet end error.\n");
+	  return -1;
+  }
   //=====================================
   
   if(llclose(fd, TRANSMITTER) < 0){
