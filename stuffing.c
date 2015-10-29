@@ -7,10 +7,10 @@ int write_stuffing(int fd, char * buffer, int length){
 	//nao faz byte stuffing nas flags
 	char send[2];
 	
-	for(i = 0; i < length; i++){
+	/*for(i = 0; i < length; i++){
 		printf("0x%02x ",(unsigned char)buffer[i]);
 		
-	}printf("\n");
+	}printf("\n");*/
 
 
 	write(fd,&buffer[0],1);  //flag inicial
@@ -68,9 +68,9 @@ int read_destuffing(int fd, char * data_to_be_filled){
 		
 		if(ch == FLAG){  //ENCONTROU FLAG -> TERMINA
 			int j =0;			
-			for(j=0;j<i;j++){
+			/*for(j=0;j<i;j++){
 				printf("0x%02x ",(unsigned char)data_to_be_filled[j]);
-			}printf("\n");
+			}printf("\n");*/
 
 
 			return i;
