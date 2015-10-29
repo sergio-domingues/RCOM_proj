@@ -48,12 +48,12 @@
 #define ALARM_SPAN_MAX 10
 #define BAUDRATE_MIN 500
 #define BAUDRATE_MAX 110000
-#define MAX_BUFFER_SIZE 1024
+#define MAX_BUFFER_SIZE 2048
 
 int baudrate;
-
 int MAX_RETRIES;
 int ALARM_SPAN;
+int max_data_field;
 
 typedef enum { SET, DISC, UA, RR, REJ, I } typeFrame;
 

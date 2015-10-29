@@ -9,7 +9,7 @@ statemachine tolerar casos de tramas I*/
 extern int (*stateFunc)(char c,typeFrame* f)=&start;
 
 int start(char c,typeFrame* f){
-	printf("start\n");   		
+	//printf("start\n");   		
 	
 	if(c == FLAG){
 		stateFunc = flag_RCV;
@@ -19,7 +19,7 @@ int start(char c,typeFrame* f){
 }
 
 int flag_RCV(char c,typeFrame* f){
-     printf("flag_RCV\n");	
+     //printf("flag_RCV\n");	
 
      if(c == A_EMI_REC || c== A_REC_EMI){
 		stateFunc = &A_RCV;
@@ -34,7 +34,7 @@ int flag_RCV(char c,typeFrame* f){
 }
 
 int A_RCV(char c,typeFrame* f){
-	printf("A_RCV\n");
+	//printf("A_RCV\n");
 	
 	int error = 0;
 	
@@ -98,7 +98,7 @@ int A_RCV(char c,typeFrame* f){
 }
 
 int C_RCV(char c,typeFrame* f){
-	printf("C_RCV\n");	
+	//printf("C_RCV\n");	
     if( c == (receiveFrame.a^receiveFrame.c)){
 		stateFunc = &BCC;
 		receiveFrame.bcc = c;
@@ -118,7 +118,7 @@ int C_RCV(char c,typeFrame* f){
 }
 
 int BCC(char c,typeFrame* f){
-	printf("BCC\n");
+	//printf("BCC\n");
 	
     if (c == FLAG){
 	    receiveFrame.flag2 = FLAG;

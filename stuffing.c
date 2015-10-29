@@ -67,12 +67,6 @@ int read_destuffing(int fd, char * data_to_be_filled){
 		}
 		
 		if(ch == FLAG){  //ENCONTROU FLAG -> TERMINA
-			int j =0;			
-			/*for(j=0;j<i;j++){
-				printf("0x%02x ",(unsigned char)data_to_be_filled[j]);
-			}printf("\n");*/
-
-
 			return i;
 		}
 		

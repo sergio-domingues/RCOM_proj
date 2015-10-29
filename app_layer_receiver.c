@@ -1,78 +1,16 @@
 #include "macros.h"
-#include "protocolo.h"
+#include "link_layer.h"
+#include "app_layer_utils.h"
 
-#define NUM_ARGS 4 
+#define NUM_ARGS 1
 
-typedef struct{	
-	int file_length;
-	char file_name[30];	
-} control_packet;
-
-static control_packet c_packets[2];
+static control_packet_receiver c_packets[2];  //control packet start and end
 static int file_descriptor, num_sequencia = 0;
-
-int ctrl_packet_handler(char * buffer, int packet){	
-	printf("control packet:%s.\n",buffer);
-	
-	int i,indice=0,acc;
-	
-	/*for(i=0; i < 21;i++){
-		printf("value:%d\n",buffer[i]);
-	}*/
-
-	for(i=0; i < 2; i++){  //2 - expect 2 args
-	
-		if(buffer[indice] == CTRL_ARG_FILE_NAME){ //parameter type
-			indice++; 
-			acc = buffer[indice]; //parameter Length
-			indice++;
-			memcpy(&c_packets[packet].file_name, &buffer[indice], acc); //copia nome para struct	
-		}
-		else if(buffer[indice] == CTRL_ARG_FILE_LENGTH){ //parameter type
-			indice++; 
-			acc = buffer[indice]; //parameter Length
-			indice++;
-			int file_size = 0, j;
-			for( j = 0; j < acc; j++){ 
-				file_size += (unsigned char)buffer[indice+j] * pow(256,j);
-			}
-			c_packets[packet].file_length = file_size;
-		}
-		else {
-			printf("Control packet is corrupted.\n");
-			return -1;
-		}
-		
-		indice += acc;  //indice actual do buffer
-	}
-
-	printf("file_length:%d\n",c_packets[packet].file_length);
-	
-	return 0;
-}
-
-int data_packet_handler(char* buffer){
-	
-	if(buffer[0] - num_sequencia > 1 ){  //verifica valida do num sequencia
-		printf("Expected frame sequence #%d but it was #%d.\n",num_sequencia+1,(unsigned char)buffer[0]);
-		return -1;
-	}
-	
-	int segment_size = (unsigned char)buffer[1]*256 + (unsigned char)buffer[2];
-	
-	/* WRITE FRAGMENT TO FILE DESTINATION */
-	if (write(file_descriptor, buffer+3 , segment_size) < 0){
-		printf("Error writting file_segment.\n");
-		return -1;
-	}
-	
-	return 0;
-}
 
 int main(int argc, char** argv){
   
 	if(argc < NUM_ARGS + 1){
-		printf("Usage: app [PORT] [BAUDRATE].\n");
+		printf("Usage: app [PORT].\n");
 		return -1;
 	}
 	
@@ -84,25 +22,8 @@ int main(int argc, char** argv){
 	}	
 	int port = atoi(argv[1]);	
 	
-	if( atoi(argv[2]) < BAUDRATE_MIN || atoi(argv[2]) > BAUDRATE_MAX){
-		printf("Baudrate accepted values: [%d,%d].\n",BAUDRATE_MIN,BAUDRATE_MAX);
-		return -1;
-	}	
-	
-	baudrate = atoi(argv[2]);
+	menu(RECEIVER);  //MENU
 
-	if( atoi(argv[3]) < 0 || atoi(argv[3]) > ALARM_SPAN_MAX ){
-		printf("Alarm Span [0,%d]./n",ALARM_SPAN_MAX);
-		return -1;
-	}
-	ALARM_SPAN = atoi(argv[3]);
-
-	if( atoi(argv[4]) < 0 || atoi(argv[4]) > MAX_RETRIES_MAX ){
-		printf("Max Retries [0,%d]./n",MAX_RETRIES_MAX);
-		return -1;
-	}
-	MAX_RETRIES = atoi(argv[4]);
-	
 	//=========================
     /* OPEN PORT AND CONNECTS */
 	
@@ -134,12 +55,12 @@ int main(int argc, char** argv){
 		switch (buffer[0]){
 			
 			case 0: //dados
-				ret = data_packet_handler(&buffer[1]);
+				ret = data_packet_handler(&buffer[1],file_descriptor, num_sequencia);
 				printf("data packet handler.\n");					
 			break;
 			
 			case 1: //start
-				ret = ctrl_packet_handler(&buffer[1],0);
+				ret = ctrl_packet_handler(&buffer[1], c_packets, 0); //0 - start
 				printf("ctrl packet handler start.\n");	
 				
 				/* OPEN FILE */
@@ -155,7 +76,7 @@ int main(int argc, char** argv){
 			break;
 				
 			case 2:	//end	
-				ret = ctrl_packet_handler(&buffer[1],1);
+				ret = ctrl_packet_handler(&buffer[1], c_packets, 1); // 1 - end
 				printf("crtl packet handler end.\n");	
 
 				if(close(file_descriptor) < 0){

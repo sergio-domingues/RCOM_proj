@@ -1,91 +1,28 @@
 #include "macros.h"
-#include "protocolo.h"
+#include "link_layer.h"
+#include "app_layer_utils.h"
 
-#define FILENAME "pinguim.gif"
 #define P_HEADER_SIZE 	4 			/* BYTES */
-#define FILE_SECTION_MAX_SIZE 5000  /* BYTES */
-#define NUM_ARGS 6
+#define NUM_ARGS 		2
 
-typedef struct {
- unsigned char control_field;  //START POR DEFEITO
- 
- unsigned char type_filename; //nome do ficheiro
- unsigned char length_filename;
- char * value_filename;
- 
- unsigned char type_file_length; 	//tamanho do ficheiro
- unsigned char length_file_length;
- unsigned char* value_file_length;
- 
-} control_packet;
-
-
-void fillControlPacket(control_packet * packet){
-    packet->control_field = I_CONTROL_START;  //START POR DEFEITO
- 
-    packet->type_filename = CTRL_ARG_FILE_NAME; //type : nome do ficheiro
- 
-    packet->type_file_length = CTRL_ARG_FILE_LENGTH; 	//tamanho do ficheiro
-}
-
-int changeToArray(control_packet packet, char* array){
-     
-     array[0]= packet.control_field;
-     array[1] = packet.type_filename;
-     array[2] = packet.length_filename;
-     memcpy(&array[3], packet.value_filename, (int)packet.length_filename);
-     
-     array[3 + strlen(packet.value_filename)+1] = packet.type_file_length;
-     array[4 + strlen(packet.value_filename)+1] = packet.length_file_length;
-     memcpy(&array[5 + strlen(packet.value_filename)+1], packet.value_file_length, (int)packet.length_file_length);
-
-     return (5 + (int)packet.length_filename +  (int)packet.length_file_length );    
-}
-
-//============================
 
 int main(int argc, char** argv){
-  
+  	
+	/* VERIFICACOES */
+
 	if(argc < NUM_ARGS + 1){
-		printf("Usage: app [PORT] [BAUDRATE] [FRAGMENT_SIZE BYTES] [FILENAME] [ALARM SPAN] [TIMEOUT].\n");
+		printf("Usage: app [PORT] [FILENAME] .\n");
 		return -1;
 	}
 
-	//TODO alterar isto para valor argv correcto
-	
-	//TODO PASSAR NOME DO FICHEIRO POR ARG
-	
-	/* VERIFICACOES */
 	if(argv[1] < 0){
 		printf("Insert correct port value.\n");
 		return -1;
 	}	
-	int port = atoi(argv[1]);	
-	
-	if( atoi(argv[2]) < BAUDRATE_MIN || atoi(argv[2]) > BAUDRATE_MAX){
-		printf("Baudrate accepted values: [%d,%d].\n",BAUDRATE_MIN,BAUDRATE_MAX);
-		return -1;
-	}	
-	baudrate = atoi(argv[2]);
-
-	if( atoi(argv[3]) < 0 || atoi(argv[3]) > MAX_BUFFER_SIZE ){
-		printf("data's frames size ]0,%d]./n",MAX_BUFFER_SIZE);
-		return -1;
-	}	
-	int max_data_field = atoi(argv[3]);
-
-	if( atoi(argv[5]) < 0 || atoi(argv[5]) > ALARM_SPAN_MAX ){
-		printf("Alarm Span [0,%d]./n",ALARM_SPAN_MAX);
-		return -1;
-	}
-	ALARM_SPAN = atoi(argv[5]);
-
-	if( atoi(argv[6]) < 0 || atoi(argv[6]) > MAX_RETRIES_MAX ){
-		printf("Max Retries [0,%d]./n",MAX_RETRIES_MAX);
-		return -1;
-	}
-	MAX_RETRIES = atoi(argv[6]);
+	int port = atoi(argv[1]);		
 	 
+	menu(TRANSMITTER);  //MENU
+
   //===================
   
   /* OPEN PORT AND CONNECTS */

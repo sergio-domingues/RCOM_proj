@@ -1,6 +1,6 @@
 CC = gcc
 FLAGS = -Wall -lm
-FILES = protocolo.c stuffing.c statemachine.c
+FILES = link_layer.c stuffing.c app_layer_utils.c statemachine.c 
 OUT_EXE = app
 
 transmitter:
