@@ -92,7 +92,7 @@ int main(int argc, char** argv){
   
   int fd;
   
-  if ( (fd = llopen(port,TRANSMITTER)) < 0) { //se modificar 1º param, modificar tb llclose
+  if ( (fd = llopen(port,TRANSMITTER)) < 0) { 	
 	printf("Error on llopen.\n");
 	return -1;
   }
