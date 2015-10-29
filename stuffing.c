@@ -6,6 +6,9 @@ int write_stuffing(int fd, char * buffer,int length){
 	int i,res = 0, acc = 0;
 	//nao faz byte stuffing nas flags
 	unsigned char send[2];
+	
+	write(fd,&buffer[0],1);  //flag inicial
+
 	for(i=1; i < length - 1; i++){	
 	 
 		if(buffer[i] == FLAG){
@@ -20,6 +23,7 @@ int write_stuffing(int fd, char * buffer,int length){
 			
 			acc += 2;	
 		}else {
+			printf("stuff:%d\n",buffer[i]);
 			res = write(fd,&buffer[i],1);
 			acc++;
 		}
@@ -29,6 +33,8 @@ int write_stuffing(int fd, char * buffer,int length){
 			return -1;
 		}	
 	}
+
+	write(fd,&buffer[length-1],1);  //flag final
 	
 	return acc;
 }

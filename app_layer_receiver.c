@@ -15,7 +15,8 @@ int ctrl_packet_handler(char * buffer, int packet){
 	printf("control packet:%s.\n",buffer);
 	
 	int i,indice=0,acc;
-	
+		
+
 	for(i=0; i < 2; i++){  //2 - expect 2 args
 	
 		if(buffer[indice] == CTRL_ARG_FILE_LENGTH){ //parameter type
@@ -40,7 +41,6 @@ int ctrl_packet_handler(char * buffer, int packet){
 		}
 		
 		indice += acc;  //indice actual do buffer
-	}
 	
 	return 0;
 }
@@ -121,6 +121,8 @@ int main(int argc, char** argv){
 				printf("ctrl packet handler.\n");	
 				
 				/* OPEN FILE */
+
+				printf("filename:%s\n",c_packets[0].file_name);
 				file_descriptor = open(c_packets[0].file_name, O_CREAT|O_WRONLY, 0666);
 				if(file_descriptor < 0){
 					printf("Error opening file.\n");

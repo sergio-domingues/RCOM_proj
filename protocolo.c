@@ -194,7 +194,7 @@ int connection_receiver(int fd){
 		return -1;
 	}	
 	else 
-		printf("UA frame sent.\n");
+		printf("connection receiver:UA frame sent.\n");
 	
 	return fd;
 }
@@ -255,21 +255,18 @@ int llwrite(int fd, char * buffer, int length){
 	
 	memcpy(&frame[4],buffer,length);  // I = [FH|PH|DATA]	
 
-	int i ;
-	for(i=0; i < length; i++){
-		printf("frame[%d]:%c\n",i,frame[i]);
-	}
 	//============================
 	
 	/* TAIL FRAME HEADER */
 	
 	frame[sizeof(frame)-2] = calc_bcc(buffer, length); //calcula bcc2 do campo de dados
 	frame[sizeof(frame)-1] = FLAG;
+	
 	//I = [FH|PH|DATA|FT]
 	//============================
 	int chs_w;
 	
-	while( (retries < MAX_RETRIES) && retries > 0){	
+	while( (retries < MAX_RETRIES) && (retries >= 0) ){	
 		/*		 STUFFING 		*/		
 		
 		chs_w = write_stuffing(fd,frame, sizeof(frame));
@@ -354,7 +351,7 @@ int llread(int fd, char * buffer){
 		while(counter < 5){  //TODO REDEFINE HARDCODE VALUE
 		
 			/* 	 TENTA RECEBER TRAMA 	*/
-			ack = receive_frame(fd,&received_frame);
+			ack = receive_frame(fd, &received_frame);
 
 			if(ack < 0){
 				printf("llread:timeout reached.\n");
@@ -373,7 +370,8 @@ int llread(int fd, char * buffer){
 				else 
 					printf("UA frame sent.\n");					
 			}
-			else if(frame_received == I){  // FRAME I
+			else if(received_frame == I){  // FRAME I
+				printf("received I frame.\n");
 				s = ack >> 5; // ack -> campo de controlo da  trama
 				break;  			
 			}		
@@ -410,6 +408,7 @@ int llread(int fd, char * buffer){
 		
 		unsigned char bcc2;
 		bcc2 = calc_bcc(buffer,ret-1); // -1: ignora bcc2
+		printf("bcc2:%d\n",buffer[ret-2]);
 		
 		//REJEITA FRAME <- ERRO NO BCC2
 		if(bcc2 != buffer[ret-1] ){
