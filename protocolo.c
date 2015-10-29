@@ -282,7 +282,7 @@ int llwrite(int fd, char * buffer, int length){
 		//remover parte do while se estiver a dar coco
 		while(inner_responses < MAX_RETRIES){ //no caso de receber resposta inesperada ("sem valor logico") 
 			
-			typeFrame r_frame = RR; //valor de r_frame e modificado na statefunc
+			typeFrame r_frame = DISC; //valor de r_frame e modificado na statefunc
 			ack = receive_frame(fd,&r_frame);  //valor do campo de controlo r, N(r)
 			
 			if(ack < 0){ //espera por uma resposta do receptor
@@ -292,8 +292,9 @@ int llwrite(int fd, char * buffer, int length){
 			}	
 			else{
 				if(r_frame == RR){ //positive acknowledge				
-					
+					printf("Received RR\n");
 					if( (ack >> 5) == num_sequencia){
+						printf("<<<<<<<<<<<<<<<<<<CENAS.\n");
 						retries = -1; //termina ciclo exterior "sucesso"
 						break;
 					} else { 		//valor nao esperado
