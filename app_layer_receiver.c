@@ -16,18 +16,22 @@ int ctrl_packet_handler(char * buffer, int packet){
 	
 	int i,indice=0,acc;
 	
+	/*for(i=0; i < 21;i++){
+		printf("value:%d\n",buffer[i]);
+	}*/
+
 	for(i=0; i < 2; i++){  //2 - expect 2 args
 	
-		if(buffer[indice] == CTRL_ARG_FILE_LENGTH){ //parameter type
+		if(buffer[indice] == CTRL_ARG_FILE_NAME){ //parameter type
 			indice++; 
 			acc = buffer[indice]; //parameter Length
-			
-			memcpy(&c_packets[packet], &buffer[indice], acc); //copia nome para struct	
+			indice++;
+			memcpy(&c_packets[packet].file_name, &buffer[indice], acc); //copia nome para struct	
 		}
-		else if(buffer[indice] == CTRL_ARG_FILE_NAME){ //parameter type
+		else if(buffer[indice] == CTRL_ARG_FILE_LENGTH){ //parameter type
 			indice++; 
 			acc = buffer[indice]; //parameter Length
-			
+			indice++;
 			int file_size = 0, j;
 			for( j = 0; j < acc; j++){ 
 				file_size += (unsigned char)buffer[indice+j] * pow(256,j);
@@ -41,6 +45,8 @@ int ctrl_packet_handler(char * buffer, int packet){
 		
 		indice += acc;  //indice actual do buffer
 	}
+
+	printf("file_length:%d\n",c_packets[packet].file_length);
 	
 	return 0;
 }
@@ -121,6 +127,8 @@ int main(int argc, char** argv){
 				printf("ctrl packet handler.\n");	
 				
 				/* OPEN FILE */
+				printf("filename:%s\n",c_packets[0].file_name);
+
 				file_descriptor = open(c_packets[0].file_name, O_CREAT|O_WRONLY, 0666);
 				if(file_descriptor < 0){
 					printf("Error opening file.\n");

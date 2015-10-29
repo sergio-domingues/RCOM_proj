@@ -194,7 +194,7 @@ int connection_receiver(int fd){
 		return -1;
 	}	
 	else 
-		printf("UA frame sent.\n");
+		printf("connection receiver:UA frame sent.\n");
 	
 	return fd;
 }
@@ -339,7 +339,7 @@ int llwrite(int fd, char * buffer, int length){
 //a ser chamada no receptor
 int llread(int fd, char * buffer){	
   
-	typeFrame received_frame = I;
+	typeFrame received_frame = DISC;
 	int ack, ret;
 	char s;
 	
@@ -373,7 +373,8 @@ int llread(int fd, char * buffer){
 				else 
 					printf("UA frame sent.\n");					
 			}
-			else if(frame_received == I){  // FRAME I
+			else if(received_frame == I){  // FRAME I
+printf("received I frame.\n");
 				s = ack >> 5; // ack -> campo de controlo da  trama
 				break;  			
 			}		
@@ -408,8 +409,9 @@ int llread(int fd, char * buffer){
 			//TODO AGIR DE ACORDO
 		}
 		
-		unsigned char bcc2;
+		char bcc2;
 		bcc2 = calc_bcc(buffer,ret-1); // -1: ignora bcc2
+		
 		
 		//REJEITA FRAME <- ERRO NO BCC2
 		if(bcc2 != buffer[ret-1] ){
