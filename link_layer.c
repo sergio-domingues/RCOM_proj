@@ -27,7 +27,7 @@ static struct termios oldtio; //boa pratica limited scope
 static struct sigaction sa;
 volatile static int alarm_flag = 0, counter = 0, num_sequencia = 0;
 
-
+int num_rej=0, num_timeouts = 0, num_retransmissions = 0;
 
 /* ================= LLOPEN  =================*/
 
@@ -105,6 +105,7 @@ int llwrite(int fd, char * buffer, int length){
 		chs_w = write_stuffing(fd, frame, sizeof(frame));
 		if (chs_w < 0){
 			printf("error writting stuffed frame\n");
+			num_retransmissions++;			
 			retries++;
 			continue;
 		}
@@ -119,7 +120,7 @@ int llwrite(int fd, char * buffer, int length){
 
 		if(ack < 0){ 			/*   TIMEOUT   */
 			printf("Timeout reached. Retry:%d.\n",retries);
-		
+			num_retransmissions++;
 			retries++;
 			continue; 
 		}	
@@ -147,6 +148,7 @@ int llwrite(int fd, char * buffer, int length){
 					//num_sequencia = 1-num_sequencia; 		//reset to previous value
 					frame[2] = N(num_sequencia);   
 					frame[3] = A_EMI_REC^frame[2];
+					num_retransmissions++;
 					retries++;
 					continue; 								//retransmit frame
 				}
@@ -154,6 +156,7 @@ int llwrite(int fd, char * buffer, int length){
 			else {
 				printf("Expected RR/REJ but received different frame.\n");
 				retries++;
+				num_retransmissions++;
 				continue; 
 			}
 		}		
@@ -263,6 +266,7 @@ int llread(int fd, char * buffer){
 			
 			reusable.c = C_REJ | N(s);
 			reusable.bcc = A_EMI_REC^reusable.c;
+			num_rej++;
 		}
 		else{
 			num_sequencia = 1-num_sequencia;
@@ -351,6 +355,7 @@ int receive_frame(int fd, typeFrame* f){
 	    pos_ack = stateFunc(ch,f);
 	    
 	    if(alarm_flag){ //disparou alarme
+			num_timeouts++;
 			alarm_flag = 0;
 			return -1;		
 	    }
@@ -438,6 +443,7 @@ int connection_receiver(int fd){
 		/* WAIT FOR SET FRAME */
 		if(receive_frame(fd,&frame_received) < 0){
 			printf("connection_receiver: TIMEOUT on receive frame. Retransmitting\n");
+			num_retransmissions++;
 			i++;	
 			continue;		
 		}
@@ -445,6 +451,7 @@ int connection_receiver(int fd){
 		if(frame_received == SET) 
 			break;
 
+		num_retransmissions++;
 		i++;		
 	}
 
@@ -571,7 +578,8 @@ int transmission_frame_SU(int fd, frame send, int length){
 
 		if( (res = send_frame(fd,send,length)) <= 0 ){
 			fprintf(stderr,"Error sending frame.\n Trying to transmit again.\n");
-			sleep(1);			
+			sleep(1);		
+			num_retransmissions++;	
 			cnt++;
 			continue;
 		}
@@ -586,6 +594,7 @@ int transmission_frame_SU(int fd, frame send, int length){
 		}
 		else {
 			printf("nao recebe UA\n");
+			num_retransmissions++;
 			cnt++;
 		}		
 	}
@@ -609,6 +618,7 @@ int transmission_frame_disc(int fd, frame send, int length){
 				
 		if( send_frame(fd,send,length) < 0 ){
 			printf("Error sending frame.\n Trying to transmit again.\n");
+			num_retransmissions++;			
 			cnt++;			
 			continue;
 		}
@@ -620,6 +630,7 @@ int transmission_frame_disc(int fd, frame send, int length){
 			printf("DISC RECEIVED.\n");
 		}
 		else {
+			num_retransmissions++;
 			cnt++;
 			continue;
 		}
@@ -646,6 +657,12 @@ int transmission_frame_disc(int fd, frame send, int length){
 	}
 	
 	return 0; //success	
+}
+
+void print_stats(){
+		printf("rejections: %d\n",num_rej);
+		printf("timeouts: %d\n", num_timeouts);
+		printf("num_retransmissions: %d\n", num_retransmissions);
 }
 
 

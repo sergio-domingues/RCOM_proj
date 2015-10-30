@@ -33,7 +33,10 @@ int main(int argc, char** argv){
 		return -1;
 	}
 	//=========================
-	
+	//STATS RELATED
+	int num_i_frames = 0;
+
+
 	int stop = 0, cnt = 0;
 	char buffer[MAX_BUFFER_SIZE];
 	
@@ -56,7 +59,11 @@ int main(int argc, char** argv){
 			
 			case 0: //dados
 				ret = data_packet_handler(&buffer[1],file_descriptor, num_sequencia);
-				printf("data packet handler.\n");					
+				if(ret < 0){
+					printf("error writting to file.\n");
+				}
+				printf("data packet handler.\n");
+				num_i_frames++;		//stats			
 			break;
 			
 			case 1: //start
@@ -64,8 +71,6 @@ int main(int argc, char** argv){
 				printf("ctrl packet handler start.\n");	
 				
 				/* OPEN FILE */
-
-				printf("filename:%s\n",c_packets[0].file_name);
 
 				file_descriptor = open(c_packets[0].file_name, O_CREAT|O_WRONLY, 0666);
 				if(file_descriptor < 0){
@@ -104,7 +109,11 @@ int main(int argc, char** argv){
 	if(cnt == MAX_RETRIES)
 		return -1;
 	
-	//TODO: VERIFICACOES
+	
+
+	printf("\n\nSTATS:\n");
+	print_stats();
+	printf("I frames received: %d\n",num_i_frames);
 	
 	//NO FINAL REPORTAR
 

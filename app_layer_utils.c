@@ -17,13 +17,13 @@ void menu(int type){
 	if(type != RECEIVER)
 		max_data_field = 1024;
 
-	printf("==================> SETTINGS <===================\n");
+	printf("==================> SETTINGS <======================\n");
 	printf("BAUDRATE (DEFAULT:%d) 	- TO CHANGE PRESS 1\n", baudrate);
 	printf("MAX_RETRIES (DEFAULT:%d) 	- TO CHANGE PRESS 2\n", MAX_RETRIES);
 	printf("ALARM_SPAN (DEFAULT:%d) 		- TO CHANGE PRESS 3\n", ALARM_SPAN);
 	printf("DATA FRAME SIZE:(DEFAULT:%d)     - TO CHANGE PRESS 4\n", max_data_field);
 	printf("EXIT - PRESS 5  \n");
-	printf("=================================================\n");
+	printf("====================================================\n");
 
 	int option,value;
 	printf("option: ");
@@ -92,13 +92,13 @@ void menu(int type){
 		}
 
 		
-		printf("==================> SETTINGS <===================\n");
+		printf("==================> SETTINGS <======================\n");
 		printf("BAUDRATE (DEFAULT: %d) 	- TO CHANGE PRESS 1\n", baudrate);
 		printf("MAX_RETRIES (DEFAULT: %d) 	- TO CHANGE PRESS 2\n", MAX_RETRIES);
 		printf("ALARM_SPAN (DEFAULT: %d) 	- TO CHANGE PRESS 3\n", ALARM_SPAN);
 		printf("DATA FRAME SIZE (DEFAULT: %d)     - TO CHANGE PRESS 4\n", max_data_field);
 		printf("EXIT - PRESS 5  \n");
-		printf("=================================================\n\n");		
+		printf("====================================================\n\n");		
 		printf("option: ");		
 		scanf("%d",&option);
 	}
@@ -150,7 +150,7 @@ int data_packet_handler(char* buffer,int fd, int num_sequencia){
 	/* WRITE FRAGMENT TO FILE DESTINATION */
 	if (write(fd, buffer+3 , segment_size) < 0){  //ignora 3 primeiros bytes = n_seq + (l1 + l2) -> tamanho dos dados
 		printf("Error writting file_segment.\n");
-		return -1;
+		return 1;
 	}
 	
 	return 0;
