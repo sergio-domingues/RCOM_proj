@@ -243,7 +243,7 @@ int llread(int fd, char * buffer){
 		/* TRATAMENTO DA TRAMA I  */
 		
 		ret = read_destuffing(fd,buffer);
-		//printf("Lidos:%d\n",ret);
+
 		if(ret < 0 ){
 			printf("llread:error on read_destuffing.\n");
 			cnt++;
@@ -571,9 +571,8 @@ int transmission_frame_SU(int fd, frame send, int length){
 	//loop enqt (emissor not connected receiver) até max_retries	
 	
 	while(cnt < MAX_RETRIES){
-			int res;	
 
-		if( (res = send_frame(fd,send,length)) <= 0 ){
+		if( send_frame(fd,send,length) <= 0 ){
 			fprintf(stderr,"Error sending frame.\n Trying to transmit again.\n");
 			sleep(1);		
 			num_retransmissions++;	

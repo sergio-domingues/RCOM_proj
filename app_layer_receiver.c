@@ -40,7 +40,7 @@ int main(int argc, char** argv){
 	int stop = 0, cnt = 0;
 	char buffer[MAX_BUFFER_SIZE];
 	
-	while(stop == 0 && cnt < MAX_RETRIES){
+	while( (stop == 0) && (cnt < MAX_RETRIES)){ 
 		int res;
 		
 		res = llread(port_fd,buffer);
@@ -107,8 +107,7 @@ int main(int argc, char** argv){
 	}
 
 	if(cnt == MAX_RETRIES)
-		return -1;
-	
+		return -1;	
 	
 
 	printf("\n\nSTATS:\n");
