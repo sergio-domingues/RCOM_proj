@@ -83,6 +83,7 @@ void menu(int type){
 			break;
 
 			case 5: //exit
+				fflush(stdout);
 				return;  
 			break;
 
@@ -102,6 +103,8 @@ void menu(int type){
 		printf("option: ");		
 		scanf("%d",&option);
 	}
+		fflush(stdout);
+		return;
 }
 
 

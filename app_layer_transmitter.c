@@ -22,7 +22,7 @@ int main(int argc, char** argv){
 	int port = atoi(argv[1]);		
 	 
 	menu(TRANSMITTER);  //MENU
-
+	
   //===================
   
   /* OPEN PORT AND CONNECTS */
@@ -36,7 +36,7 @@ int main(int argc, char** argv){
   
   /* OPEN FILE */
   int file_fd;
-  if((file_fd = open(argv[4],O_RDONLY)) < -1){
+  if((file_fd = open(argv[2],O_RDONLY)) < -1){
 	  printf("Erro a abrir ficheiro %s.\n", argv[NUM_ARGS]);
 	  return -1;
   }
@@ -59,8 +59,8 @@ int main(int argc, char** argv){
   control_packet c_packet_start;  //c-control d-data
   fillControlPacket(&c_packet_start);
   
-  c_packet_start.length_filename = strlen(argv[4]) + 1;  //FILENAME SIZE
-  c_packet_start.value_filename = argv[4];   //FILENAME 
+  c_packet_start.length_filename = strlen(argv[2]) + 1;  //FILENAME SIZE
+  c_packet_start.value_filename = argv[2];   //FILENAME 
   
   c_packet_start.length_file_length = sizeof(file_size);
 

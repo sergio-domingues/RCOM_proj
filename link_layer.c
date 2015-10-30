@@ -38,8 +38,8 @@ int llopen(int porta,int tipo){
 	sprintf(device_path,"%s%d",DISPOSITIVO, porta);
 		
 	int fd = open(device_path, O_RDWR | O_NOCTTY ); //If set & path identifies a terminal device dn't cause terminal device to become the controlling terminal for the process.
+
 	if (fd < 0) { perror(device_path); exit(-1); }
-		
 	printf("Inicia comunicao com dispostivo.\n");	
 	
 	port_setting(fd); //configura port
@@ -174,25 +174,25 @@ int llwrite(int fd, char * buffer, int length){
 int llread(int fd, char * buffer){	
   
 	typeFrame received_frame = DISC;
-	int ack, ret;
+	int ack, ret,cnt = 0;
 	char s;
 	
 	frame reusable;
 	reusable.flag = FLAG;
 	reusable.a = A_EMI_REC;
 	reusable.flag2 = FLAG;
-	
+
 	while(1){
 	
 		//VERIFICA O TIPO DE TRAMA RECEBIDA
-		while(counter < MAX_RETRIES){  //
+		while(cnt < MAX_RETRIES){  
 		
 			/* 	 TENTA RECEBER TRAMA 	*/
 			ack = receive_frame(fd, &received_frame);
 
 			if(ack < 0){
 				printf("llread:timeout reached.\n");
-				counter++;
+				cnt++;
 				sleep(1);
 				continue;
 			}
@@ -211,20 +211,18 @@ int llread(int fd, char * buffer){
 					printf("UA frame sent.\n");					
 			}
 			else if(received_frame == I){  // FRAME I
-				printf("received I frame.\n");
-				counter=0;
-				s = ack >> 5; // ack -> campo de controlo da  trama
-				printf("s:%d\n",s);
+				//printf("received I frame.\n");
+				//printf("s:%d\n",s);
+				s = ack >> 5; // ack -> campo de controlo da  trama				
 				break;  			
 			}		
 		}
 		//nao recebeu frame
-		if(counter == 5){ 
-			counter = 0;
+		if(cnt == MAX_RETRIES){ 
 			printf("llread: didnt receive accpetable frame.\n");
 			return -1; //TODO VERIFICAR SE ESTA E A OP + CORRECTA
 		}
-		counter = 0;
+		cnt = 0;
 		
 		if(s != num_sequencia){  //emissor nao recebeu PREVIOUS ACK 
 
@@ -245,17 +243,16 @@ int llread(int fd, char * buffer){
 		/* TRATAMENTO DA TRAMA I  */
 		
 		ret = read_destuffing(fd,buffer);
-		printf("Lidos:%d\n",ret);
+		//printf("Lidos:%d\n",ret);
 		if(ret < 0 ){
 			printf("llread:error on read_destuffing.\n");
-			counter++;
+			cnt++;
 			//sleep(1);
 			continue;			
 		}
 		
 		char bcc2;
-		bcc2 = calc_bcc(buffer,ret-1); // -1: ignora bcc2
-		printf(">>>>>>>>>>>>>>bcc2:%d\n",bcc2);
+		bcc2 = calc_bcc(buffer,ret-1); // -1: ignora bcc2		
 		
 		
 		//REJEITA FRAME <- ERRO NO BCC2
@@ -627,7 +624,7 @@ int transmission_frame_disc(int fd, frame send, int length){
 		
 		//RECEBE DISC
 		if(receive_frame(fd, &frame_received) >= 0 && frame_received == DISC ){
-			printf("DISC RECEIVED.\n");
+			printf("DISC RECEIVED.\n");		
 		}
 		else {
 			num_retransmissions++;
@@ -649,6 +646,7 @@ int transmission_frame_disc(int fd, frame send, int length){
 			return -1;
 		}	
 		printf("disconnection: UA SENT.\n");
+		break;
 	}
 	
 	if(cnt == MAX_RETRIES){ //nao conseguiu estabelecer conexao
