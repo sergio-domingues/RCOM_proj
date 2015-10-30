@@ -102,6 +102,7 @@ void menu(int type){
 		printf("option: ");		
 		scanf("%d",&option);
 	}
+	return;
 }
 
 
