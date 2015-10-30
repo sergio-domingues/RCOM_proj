@@ -37,13 +37,21 @@ int llopen(int porta,int tipo){
 	
 	sprintf(device_path,"%s%d",DISPOSITIVO, porta);
 		
+	fprintf(stderr,"%s\n",device_path);
+
+	
 	int fd = open(device_path, O_RDWR | O_NOCTTY ); //If set & path identifies a terminal device dn't cause terminal device to become the controlling terminal for the process.
+
+	fprintf(stderr,">>>>>>>>>>>>>>>>>>2\n");
 
 	if (fd < 0) { perror(device_path); exit(-1); }
 	printf("Inicia comunicao com dispostivo.\n");	
 	
+
+
 	port_setting(fd); //configura port
 		
+
 	 // Setup the sighub handler
     sa.sa_handler = &atende;	
 	sigaction(SIGALRM, &sa, NULL);
@@ -93,7 +101,7 @@ int llwrite(int fd, char * buffer, int length){
 	frame[sizeof(frame)-2] = calc_bcc(buffer, length); //calcula bcc2 do campo de dados
 	frame[sizeof(frame)-1] = FLAG;
 	
-	printf(">>>>>>>>>>>bcc : %d \n", frame[sizeof(frame)-2]);
+	//printf(">>>>>>>>>>>bcc : %d \n", frame[sizeof(frame)-2]);
 
 	//I = [FH|PH|DATA|FT]
 	//============================
@@ -109,6 +117,7 @@ int llwrite(int fd, char * buffer, int length){
 			retries++;
 			continue;
 		}
+		fprintf(stdout,"I frame sent...\n");
 		
 		typeFrame r_frame = DISC; 				//valor de r_frame e modificado na statefunc
 		
@@ -126,7 +135,7 @@ int llwrite(int fd, char * buffer, int length){
 		}	
 		else{
 			if(r_frame == RR){ //positive acknowledge				
-				printf("Received RR\n");
+				//printf("Received RR\n");
 				if( (ack >> 5) != num_sequencia){
 					retries = -1; //termina ciclo  "sucesso"
 					num_sequencia = 1 - num_sequencia;					

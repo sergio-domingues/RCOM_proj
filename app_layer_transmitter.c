@@ -23,6 +23,7 @@ int main(int argc, char** argv){
 	 
 	menu(TRANSMITTER);  //MENU
 	
+			
   //===================
   
   /* OPEN PORT AND CONNECTS */
